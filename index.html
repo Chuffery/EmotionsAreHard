@@ -390,8 +390,8 @@ function renderFeelings(query) {
       var col   = sel ? w.dark  : 'var(--text2)';
       var bc    = sel ? w.color : 'var(--border)';
       return '<button class="pill" id="' + id + '" '
-        + 'style="background:' + bg + ';color:' + col + ';border-color:' + bc + '" '
-        + 'onclick="toggleFeeling(\'' + esc(f) + '\',\'' + w.core + '\')">'
+        + 'data-feeling="' + esc(f) + '" data-core="' + w.core + '" '
+        + 'style="background:' + bg + ';color:' + col + ';border-color:' + bc + '">'
         + '<span class="pill-dot" style="background:' + w.color + '"></span>'
         + esc(f)
         + '</button>';
@@ -404,7 +404,7 @@ function renderFeelings(query) {
   list.innerHTML = html || '<p style="font-size:14px;color:var(--text3);padding:8px 0">No feelings match that search.</p>';
 }
 
-function filterFeelings(q) { renderFeelings(q); }
+function filterFeelings(q) { renderFeelings(q); initPillListener(); }
 
 function toggleFeeling(name, core) {
   var idx = state.selectedFeelings.indexOf(name);
@@ -414,11 +414,35 @@ function toggleFeeling(name, core) {
   var el = document.getElementById(pillId(name));
   if (el && w) {
     var sel = state.selectedFeelings.indexOf(name) !== -1;
-    el.style.background   = sel ? w.light        : 'var(--bg2)';
-    el.style.color        = sel ? w.dark         : 'var(--text2)';
-    el.style.borderColor  = sel ? w.color        : 'var(--border)';
+    el.style.background   = sel ? w.light   : 'var(--bg2)';
+    el.style.color        = sel ? w.dark    : 'var(--text2)';
+    el.style.borderColor  = sel ? w.color   : 'var(--border)';
   }
   document.getElementById('step1-next').disabled = (state.selectedFeelings.length === 0);
+}
+
+// Delegated listener — resolves tap by actual DOM element, not inline onclick coordinates
+// This fixes iOS Safari hit-detection drift on long flex-wrap pill lists
+function initPillListener() {
+  var list = document.getElementById('feelings-list');
+  if (!list) return;
+  function handleTap(e) {
+    // Walk up from the tap target to find a button.pill
+    var el = e.target;
+    while (el && el !== list) {
+      if (el.tagName === 'BUTTON' && el.classList.contains('pill')) {
+        e.preventDefault();
+        e.stopPropagation();
+        var feeling = el.getAttribute('data-feeling');
+        var core    = el.getAttribute('data-core');
+        if (feeling && core) toggleFeeling(feeling, core);
+        return;
+      }
+      el = el.parentElement;
+    }
+  }
+  list.addEventListener('touchend', handleTap, {passive: false});
+  list.addEventListener('click',    handleTap, false);
 }
 
 
@@ -508,6 +532,7 @@ function resetState() {
   document.getElementById('step1-next').disabled   = true;
   goStep(1);
   renderFeelings();
+  initPillListener();
 }
 
 function showScreen(name) {
@@ -738,6 +763,7 @@ if (window.navigator.standalone) {
 }
 
 renderFeelings();
+initPillListener();
 updateAllDots(1);
 </script>
 </body>
