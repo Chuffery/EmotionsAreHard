@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Emotion Tracker">
+<meta name="theme-color" content="#ffffff">
+<title>Emotion Tracker</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f5; --bg3: #eeeeee;
+  --text: #111111; --text2: #666666; --text3: #999999;
+  --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+  --accent: #4A90D9; --radius: 10px; --radius-lg: 14px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111111; --bg2: #1e1e1e; --bg3: #2a2a2a;
+    --text: #f0f0f0; --text2: #aaaaaa; --text3: #666666;
+    --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+  }
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; }
+#app { max-width: 500px; margin: 0 auto; padding: 16px 16px calc(72px + var(--safe-bottom)); min-height: 100vh; }
+.screen { display: none; }
+.screen.active { display: block; }
+h1 { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.sub { font-size: 14px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
+
+/* STEPS */
+.steps { display: flex; gap: 6px; margin-bottom: 20px; align-items: center; }
+.step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); transition: all 0.2s; }
+.step-dot.done { background: var(--accent); }
+.step-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+.step-label { font-size: 12px; color: var(--text2); margin-left: 6px; }
+
+/* SEARCH */
+.search-wrap { position: relative; margin-bottom: 14px; }
+.search-wrap input { width: 100%; padding: 11px 14px 11px 38px; font-size: 16px; border: 1px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); -webkit-appearance: none; }
+.search-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(74,144,217,0.15); }
+.search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+
+/* FEELINGS */
+.feelings-section { margin-bottom: 14px; }
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; padding: 0 2px; display: block; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ALL INTERACTIVE TAPPABLE ELEMENTS ARE <button> FOR IOS COMPATIBILITY */
+button.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 14px; border-radius: 22px;
+  font-size: 14px; font-weight: 500; font-family: inherit;
+  cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--bg2); color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+  transition: opacity 0.1s;
+  user-select: none;
+}
+button.pill:active { opacity: 0.6; }
+.pill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* REVEAL CARDS */
+.reveal-card { border-radius: var(--radius-lg); padding: 16px; margin-bottom: 14px; border: 1.5px solid transparent; }
+.rc-arrow { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 5px; }
+.rc-core { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+.rc-desc { font-size: 14px; line-height: 1.6; }
+.rc-pills { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 5px; }
+.rc-pill { display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 16px; font-size: 13px; font-weight: 500; background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.1); }
+
+/* INTENSITY */
+.intensity-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.intensity-row label { font-size: 14px; color: var(--text2); min-width: 72px; }
+.intensity-row input[type=range] { flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--bg3); }
+.intensity-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.intensity-val { font-size: 17px; font-weight: 600; min-width: 32px; text-align: right; color: var(--text); }
+
+/* MOOD BUTTONS */
+button.mood-btn {
+  flex: 1; padding: 11px 4px;
+  border-radius: var(--radius); border: 1.5px solid var(--border);
+  cursor: pointer; font-size: 11px; font-weight: 500; font-family: inherit;
+  text-align: center; background: var(--bg2); color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+  transition: opacity 0.1s;
+}
+button.mood-btn:active { opacity: 0.6; }
+.mood-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.mood-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+/* TEXTAREA */
+textarea { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); resize: vertical; font-family: inherit; line-height: 1.5; margin-bottom: 14px; -webkit-appearance: none; }
+textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(74,144,217,0.15); }
+
+/* TAGS */
+.tag-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+button.tag {
+  display: inline-flex; align-items: center;
+  padding: 8px 14px; border-radius: 18px;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  cursor: pointer; border: 1px solid var(--border);
+  background: var(--bg2); color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+  transition: opacity 0.1s;
+}
+button.tag:active { opacity: 0.6; }
+
+/* MAIN BUTTONS */
+button.btn {
+  width: 100%; padding: 14px;
+  border-radius: var(--radius); font-size: 16px; font-weight: 600; font-family: inherit;
+  cursor: pointer; border: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+  transition: opacity 0.12s;
+}
+button.btn:active { opacity: 0.75; }
+button.btn-primary { background: var(--accent); color: white; margin-top: 8px; }
+button.btn-primary:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
+button.btn-secondary { background: var(--bg2); color: var(--text2); border: 1px solid var(--border2); }
+.btn-row { display: flex; gap: 10px; margin-top: 8px; }
+.btn-row button.btn-secondary { width: auto; padding: 14px 20px; flex-shrink: 0; }
+.btn-row button.btn-primary { flex: 1; margin-top: 0; }
+
+/* LOG ENTRIES */
+.log-entry { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 12px; }
+.log-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
+.log-feelings { font-size: 15px; font-weight: 600; flex: 1; line-height: 1.4; }
+.log-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 2px; }
+.log-cores { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.log-core { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.log-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+.log-chip { font-size: 12px; padding: 3px 9px; border-radius: 10px; background: var(--bg2); color: var(--text2); }
+.log-note { font-size: 13px; color: var(--text2); line-height: 1.55; margin-top: 4px; }
+.empty { text-align: center; padding: 50px 20px; color: var(--text3); font-size: 15px; }
+
+/* NAV */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); display: flex; padding-bottom: var(--safe-bottom); z-index: 200; }
+button.nav-btn {
+  flex: 1; padding: 10px 0;
+  cursor: pointer; font-size: 11px; font-weight: 500; font-family: inherit;
+  color: var(--text3); background: none; border: none;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+}
+button.nav-btn svg { display: block; margin: 0 auto 3px; }
+button.nav-btn.active { color: var(--accent); }
+
+/* CHART */
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+button.filter-chip {
+  padding: 6px 12px; border-radius: 14px; font-size: 13px; font-family: inherit;
+  cursor: pointer; border: 1px solid var(--border2);
+  background: var(--bg2); color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+}
+button.filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+.chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+.insight-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.insight-card { flex: 1; min-width: 140px; border-radius: var(--radius); padding: 12px 14px; }
+.insight-label { font-size: 11px; margin-bottom: 4px; opacity: 0.7; }
+.insight-val { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+.insight-sub { font-size: 11px; opacity: 0.6; }
+
+/* COMBO CARD */
+.combo-card { border-radius: var(--radius-lg); padding: 16px; margin-bottom: 14px; border: 2px solid transparent; }
+.combo-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 5px; }
+.combo-name { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.combo-desc { font-size: 14px; line-height: 1.65; margin-bottom: 12px; }
+.combo-what { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.combo-tips { list-style: none; padding: 0; }
+.combo-tips li { font-size: 13px; line-height: 1.55; padding: 4px 0 4px 18px; position: relative; }
+.combo-tips li::before { content: "→"; position: absolute; left: 0; opacity: 0.5; }
+
+/* INSTALL BANNER */
+.install-banner { background: #E0EEFB; border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 18px; border: 1px solid rgba(74,144,217,0.2); }
+.install-banner p { font-size: 13px; color: #0C447C; line-height: 1.5; }
+.install-banner strong { font-weight: 600; }
+button.install-close { float: right; background: none; border: none; font-size: 20px; color: #4A90D9; cursor: pointer; padding: 0 0 0 10px; line-height: 1; font-family: inherit; touch-action: manipulation; }
+@media (prefers-color-scheme: dark) {
+  .install-banner { background: rgba(74,144,217,0.12); border-color: rgba(74,144,217,0.3); }
+  .install-banner p { color: #85B7EB; }
+  .rc-pill { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="screen active" id="screen-log">
+  <div id="step1">
+    <div class="steps" id="dots1"></div>
+    <div id="install-banner" class="install-banner">
+      <button class="install-close" onclick="document.getElementById('install-banner').style.display='none'">×</button>
+      <p><strong>Add to Home Screen</strong> for the best experience.<br>Tap Share in Safari → "Add to Home Screen"</p>
+    </div>
+    <h1>How are you feeling?</h1>
+    <p class="sub">Start with the specific word that fits. Pick as many as feel true — then we'll figure out the bigger picture together.</p>
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="search" id="search-input" placeholder="Search feelings…" oninput="filterFeelings(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div id="feelings-list"></div>
+    <button class="btn btn-primary" id="step1-next" disabled onclick="goStep(2)">Next — see what this means →</button>
+  </div>
+
+  <div id="step2" style="display:none">
+    <div class="steps" id="dots2"></div>
+    <h1>Here's what your feelings point to</h1>
+    <p class="sub">These are the broader emotions behind what you picked. Understanding the pattern can help you make sense of how you feel.</p>
+    <div id="reveal-cards"></div>
+    <div id="combo-card"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Next →</button>
+    </div>
+  </div>
+
+  <div id="step3" style="display:none">
+    <div class="steps" id="dots3"></div>
+    <h1>How strong is this?</h1>
+    <p class="sub">Rate the overall intensity right now — 1 is barely noticeable, 10 is very overwhelming.</p>
+    <div class="intensity-row">
+      <label>Intensity</label>
+      <input type="range" min="1" max="10" value="5" step="1" id="intensity-slider" oninput="state.intensity=parseInt(this.value);document.getElementById('int-disp').textContent=this.value">
+      <span class="intensity-val" id="int-disp">5</span>
+    </div>
+    <h1 style="margin-top:10px">Overall mood</h1>
+    <p class="sub">Pick the one that best describes your general state right now.</p>
+    <div class="mood-row" id="mood-row"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary" id="step3-next" disabled onclick="goStep(4)">Next →</button>
+    </div>
+  </div>
+
+  <div id="step4" style="display:none">
+    <div class="steps" id="dots4"></div>
+    <h1>What's on your mind?</h1>
+    <p class="sub">Write any thoughts running through your head. No full sentences needed.</p>
+    <textarea id="thoughts-input" rows="3" placeholder="e.g. I keep replaying what happened, I don't know why I feel off…"></textarea>
+    <h1>Did something trigger this?</h1>
+    <p class="sub">Something specific happened? Or it came out of nowhere? Both are completely valid.</p>
+    <textarea id="trigger-input" rows="2" placeholder="e.g. A loud sound, a change in plans, nothing obvious…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(5)">Next →</button>
+    </div>
+  </div>
+
+  <div id="step5" style="display:none">
+    <div class="steps" id="dots5"></div>
+    <h1>What does your body feel?</h1>
+    <p class="sub">Physical sensations are clues. Tap any that are present right now.</p>
+    <div class="tag-grid" id="body-tags"></div>
+    <h1>What do you need right now?</h1>
+    <p class="sub">Even a guess helps. What might make this a little easier?</p>
+    <div class="tag-grid" id="needs-tags"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(4)">← Back</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save entry ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-history">
+  <h1 style="margin-bottom:4px">Your entries</h1>
+  <p class="sub">A record of your emotion check-ins.</p>
+  <div id="log-list"></div>
+</div>
+
+<div class="screen" id="screen-chart">
+  <h1 style="margin-bottom:4px">Patterns over time</h1>
+  <p class="sub">Which feelings come up most often for you.</p>
+  <div class="filter-row" id="filter-row"></div>
+  <div class="chart-scroll"><svg id="chart-svg" height="240"></svg></div>
+  <div id="insights"></div>
+</div>
+
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-log" onclick="showScreen('log')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    Check in
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="showScreen('history')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    History
+  </button>
+  <button class="nav-btn" id="nav-chart" onclick="showScreen('chart')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 18l5-5 3.5 3.5 5-6.5 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Patterns
+  </button>
+</nav>
+
+<script>
+const WHEEL = [
+  { core:"Happy", color:"#F0A500", light:"#FFF3D0", dark:"#7a5200",
+    desc:"Something good is happening inside you — or recently happened. This family of feelings usually comes from things going well, getting what you need, or connecting with others.",
+    feelings:["Joyful","Excited","Playful","Content","Peaceful","Grateful","Hopeful","Proud","Cheerful","Amused","Delighted","Optimistic","Enthusiastic","Inspired","Relieved","Satisfied","Fulfilled","Radiant"] },
+  { core:"Sad", color:"#4A90D9", light:"#E0EEFB", dark:"#0C447C",
+    desc:"Something feels heavy, missing, or not right. Sadness often comes from loss, disappointment, or feeling disconnected from something important to you.",
+    feelings:["Lonely","Disappointed","Hurt","Grieving","Helpless","Regretful","Bored","Numb","Down","Miserable","Empty","Left out","Withdrawn","Heartbroken","Unwanted","Melancholy","Discouraged","Defeated"] },
+  { core:"Angry", color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F",
+    desc:"Something feels unfair, blocked, or disrespected. Anger often protects something you care about — a boundary, a value, or a need that isn't being met.",
+    feelings:["Frustrated","Irritated","Annoyed","Jealous","Betrayed","Resentful","Overwhelmed","Furious","Impatient","Bitter","Hostile","Agitated","Tense","Exasperated","Offended","Livid","Disgusted","Contemptuous"] },
+  { core:"Scared", color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489",
+    desc:"Something feels uncertain, unsafe, or threatening. Fear and anxiety signal that your brain senses a possible danger — real or imagined — and is trying to protect you.",
+    feelings:["Anxious","Nervous","Worried","Vulnerable","Insecure","Panicked","Confused","Uncertain","Apprehensive","Dread","Timid","Uneasy","Terrified","Startled","Shaky","Doubtful","On edge","Frozen"] },
+  { core:"Disgusted", color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A",
+    desc:"Something feels wrong, unacceptable, or violating. Disgust is a signal that something goes against your values or feels deeply uncomfortable to be around.",
+    feelings:["Revolted","Uncomfortable","Avoidant","Put off","Appalled","Disrespected","Repulsed","Disapproving","Nauseated","Detached","Grossed out","Reluctant","Bothered","Unsettled","Judgmental","Aversion","Withdrawn","Apprehensive"] },
+  { core:"Surprised", color:"#E05C8A", light:"#FDE8F1", dark:"#72243E",
+    desc:"Something unexpected happened — good or bad. Surprise is a brief state that quickly shifts into another emotion once your brain has had time to process what occurred.",
+    feelings:["Shocked","Amazed","Speechless","Startled","Disbelieving","Awed","Curious","Astonished","Confused","Caught off guard","Stunned","Baffled","Wide-eyed","Perplexed","Taken aback","Fascinated","Thrown off","In disbelief"] },
+];
+
+const MOODS = [
+  {label:"Very low", icon:"😞", color:"#4A90D9"},
+  {label:"Low",      icon:"😕", color:"#7B68EE"},
+  {label:"Neutral",  icon:"😐", color:"#888780"},
+  {label:"Good",     icon:"🙂", color:"#F0A500"},
+  {label:"Great",    icon:"😊", color:"#3DAA6E"},
+];
+
+const BODY  = ["Tight chest","Fast heartbeat","Tense muscles","Stomach ache","Headache","Shaky","Hot/flushed","Cold","Tired","Restless","Nauseous","Heavy limbs","Short of breath","Clenched jaw","Sweating","Pins & needles","Frozen/still","Low energy"];
+const NEEDS = ["Quiet time alone","Physical comfort","Talk to someone","Movement/walk","Water or food","Rest/sleep","Reassurance","Distraction","Help with a task","Sensory calm","Validation","Creative outlet","Fresh air","Routine/structure","No demands right now","A hug","Time to process","Noise-cancelling"];
+
+const feelingMap = {};
+WHEEL.forEach(w => w.feelings.forEach(f => feelingMap[f] = w.core));
+
+let state = {step:1, selectedFeelings:[], mood:null, intensity:5, body:[], needs:[]};
+let entries = [];
+try { entries = JSON.parse(localStorage.getItem('emo_v2') || '[]'); } catch(e){}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function pillId(f) { return 'pill-' + f.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+function goStep(n) {
+  state.step = n;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('step'+i).style.display = (i===n) ? 'block' : 'none';
+  }
+  updateAllDots(n);
+  if (n===2) renderReveal();
+  if (n===3) renderMoods();
+  if (n===5) renderBodyNeeds();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateAllDots(active) {
+  const labels = ['Feelings','Understanding','Intensity','Thoughts','Body & needs'];
+  ['1','2','3','4','5'].forEach(function(suf, i) {
+    var el = document.getElementById('dots'+suf);
+    if (!el) return;
+    var dots = labels.map(function(_,j) {
+      var cls = (j+1 < active) ? 'done' : (j+1 === active) ? 'active' : '';
+      return '<div class="step-dot ' + cls + '"></div>';
+    }).join('');
+    el.innerHTML = dots + '<span class="step-label">' + labels[active-1] + '</span>';
+  });
+}
+
+function renderFeelings(query) {
+  var q = (query || '').toLowerCase();
+  var list = document.getElementById('feelings-list');
+  var html = '';
+  WHEEL.forEach(function(w) {
+    var matching = q ? w.feelings.filter(function(f){ return f.toLowerCase().indexOf(q) !== -1; }) : w.feelings;
+    if (!matching.length) return;
+    var pillsHtml = matching.map(function(f) {
+      var sel = state.selectedFeelings.indexOf(f) !== -1;
+      var id = pillId(f);
+      var bg    = sel ? w.light : 'var(--bg2)';
+      var col   = sel ? w.dark  : 'var(--text2)';
+      var bc    = sel ? w.color : 'var(--border)';
+      return '<button class="pill" id="' + id + '" '
+        + 'style="background:' + bg + ';color:' + col + ';border-color:' + bc + '" '
+        + 'onclick="toggleFeeling(\'' + esc(f) + '\',\'' + w.core + '\')">'
+        + '<span class="pill-dot" style="background:' + w.color + '"></span>'
+        + esc(f)
+        + '</button>';
+    }).join('');
+    html += '<div class="feelings-section">'
+          + '<span class="section-label" style="color:' + w.color + '">' + w.core + '</span>'
+          + '<div class="pills">' + pillsHtml + '</div>'
+          + '</div>';
+  });
+  list.innerHTML = html || '<p style="font-size:14px;color:var(--text3);padding:8px 0">No feelings match that search.</p>';
+}
+
+function filterFeelings(q) { renderFeelings(q); }
+
+function toggleFeeling(name, core) {
+  var idx = state.selectedFeelings.indexOf(name);
+  if (idx === -1) state.selectedFeelings.push(name);
+  else state.selectedFeelings.splice(idx, 1);
+  var w = WHEEL.find(function(x){ return x.core === core; });
+  var el = document.getElementById(pillId(name));
+  if (el && w) {
+    var sel = state.selectedFeelings.indexOf(name) !== -1;
+    el.style.background   = sel ? w.light        : 'var(--bg2)';
+    el.style.color        = sel ? w.dark         : 'var(--text2)';
+    el.style.borderColor  = sel ? w.color        : 'var(--border)';
+  }
+  document.getElementById('step1-next').disabled = (state.selectedFeelings.length === 0);
+}
+
+
+
+function renderMoods() {
+  var html = MOODS.map(function(m) {
+    var sel = state.mood === m.label;
+    var style = sel
+      ? 'border-color:' + m.color + ';background:' + m.color + '22;color:' + m.color
+      : '';
+    return '<button class="mood-btn" style="' + style + '" onclick="selectMood(\'' + m.label + '\')">'
+      + '<span class="mood-icon">' + m.icon + '</span>'
+      + m.label
+      + '</button>';
+  }).join('');
+  document.getElementById('mood-row').innerHTML = html;
+  document.getElementById('step3-next').disabled = !state.mood;
+}
+
+function selectMood(label) {
+  state.mood = label;
+  renderMoods();
+}
+
+function renderBodyNeeds() {
+  document.getElementById('body-tags').innerHTML = BODY.map(function(b) {
+    var sel = state.body.indexOf(b) !== -1;
+    var style = sel ? 'background:#E0EEFB;color:#0C447C;border-color:#4A90D9' : '';
+    return '<button class="tag" style="' + style + '" onclick="toggleArr(\'body\',\'' + esc(b) + '\',this,\'#E0EEFB\',\'#0C447C\',\'#4A90D9\')">' + esc(b) + '</button>';
+  }).join('');
+  document.getElementById('needs-tags').innerHTML = NEEDS.map(function(n) {
+    var sel = state.needs.indexOf(n) !== -1;
+    var style = sel ? 'background:#E0F4EA;color:#27500A;border-color:#3DAA6E' : '';
+    return '<button class="tag" style="' + style + '" onclick="toggleArr(\'needs\',\'' + esc(n) + '\',this,\'#E0F4EA\',\'#27500A\',\'#3DAA6E\')">' + esc(n) + '</button>';
+  }).join('');
+}
+
+function toggleArr(arr, name, el, bg, color, border) {
+  var a = state[arr];
+  var idx = a.indexOf(name);
+  if (idx === -1) {
+    a.push(name);
+    el.style.background  = bg;
+    el.style.color       = color;
+    el.style.borderColor = border;
+  } else {
+    a.splice(idx, 1);
+    el.style.background  = '';
+    el.style.color       = '';
+    el.style.borderColor = '';
+  }
+}
+
+function saveEntry() {
+  var grouped = {};
+  state.selectedFeelings.forEach(function(f) {
+    var core = feelingMap[f];
+    if (!grouped[core]) grouped[core] = [];
+    grouped[core].push(f);
+  });
+  var entry = {
+    id: Date.now(),
+    ts: new Date().toISOString(),
+    selectedFeelings: state.selectedFeelings.slice(),
+    coreEmotions: Object.keys(grouped),
+    grouped: grouped,
+    mood: state.mood,
+    intensity: state.intensity,
+    thoughts: document.getElementById('thoughts-input').value,
+    trigger:  document.getElementById('trigger-input').value,
+    body:  state.body.slice(),
+    needs: state.needs.slice(),
+  };
+  entries.unshift(entry);
+  try { localStorage.setItem('emo_v2', JSON.stringify(entries)); } catch(e){}
+  resetState();
+  showScreen('history');
+}
+
+function resetState() {
+  state = {step:1, selectedFeelings:[], mood:null, intensity:5, body:[], needs:[]};
+  document.getElementById('thoughts-input').value = '';
+  document.getElementById('trigger-input').value  = '';
+  document.getElementById('intensity-slider').value = 5;
+  document.getElementById('int-disp').textContent  = '5';
+  document.getElementById('search-input').value    = '';
+  document.getElementById('step1-next').disabled   = true;
+  goStep(1);
+  renderFeelings();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name==='history') renderHistory();
+  if (name==='chart')   renderChart();
+}
+
+function renderHistory() {
+  var list = document.getElementById('log-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty">No entries yet.<br>Do your first check-in!</div>';
+    return;
+  }
+  list.innerHTML = entries.slice(0,50).map(function(e) {
+    var dt = new Date(e.ts);
+    var timeStr = dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+                + ' · ' + dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    var moodObj = MOODS.find(function(m){ return m.label===e.mood; });
+    var coreColors = (e.coreEmotions||[]).map(function(c){ return WHEEL.find(function(w){ return w.core===c; }); }).filter(Boolean);
+    return '<div class="log-entry">'
+      + '<div class="log-hdr">'
+      + '<span class="log-feelings">' + esc(e.selectedFeelings.slice(0,4).join(', ')) + (e.selectedFeelings.length>4?'…':'') + '</span>'
+      + '<span class="log-time">' + timeStr + '</span>'
+      + '</div>'
+      + '<div class="log-cores">' + coreColors.map(function(w){ return '<span class="log-core" style="background:'+w.light+';color:'+w.dark+'">'+w.core+'</span>'; }).join('') + '</div>'
+      + '<div class="log-chips">'
+      + (moodObj ? '<span class="log-chip" style="background:'+moodObj.color+'18;color:'+moodObj.color+'">'+moodObj.icon+' '+moodObj.label+'</span>' : '')
+      + '<span class="log-chip">Intensity '+e.intensity+'/10</span>'
+      + e.body.slice(0,2).map(function(b){ return '<span class="log-chip">'+esc(b)+'</span>'; }).join('')
+      + '</div>'
+      + (e.thoughts ? '<div class="log-note"><strong>Thoughts:</strong> '+esc(e.thoughts.slice(0,100))+(e.thoughts.length>100?'…':'')+'</div>' : '')
+      + (e.trigger  ? '<div class="log-note"><strong>Trigger:</strong> ' +esc(e.trigger.slice(0,80))+'</div>' : '')
+      + (e.needs && e.needs.length ? '<div class="log-note"><strong>Needs:</strong> '+esc(e.needs.slice(0,3).join(', '))+'</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// COMBINATION PATTERNS
+// Each pattern lists cores it matches (2+ needed), a name, description, color, and tips
+var COMBOS = [
+  { cores:["Scared","Angry"], name:"Defensive overload",
+    color:"#9B59B6", light:"#F5EEF8", dark:"#6C3483",
+    desc:"When fear and anger show up together, your nervous system is in high-alert protection mode. Something feels both threatening AND unfair at the same time. This is exhausting because your brain is trying to fight and flee simultaneously.",
+    tips:["Give yourself permission to feel both — they don't cancel each other out","Try to separate the threat (what scares you) from the injustice (what angers you)","Physical movement like a short walk can help discharge the built-up tension"] },
+
+  { cores:["Sad","Angry"], name:"Grief or loss",
+    color:"#E05C8A", light:"#FDE8F1", dark:"#72243E",
+    desc:"This combination often means something important was taken away, ended, or didn't go the way you needed. The sadness is the loss itself, and the anger is the part of you that knows it shouldn't have happened, or that it wasn't fair.",
+    tips:["Let yourself feel the loss without rushing to 'fix' it","Anger during grief is completely normal — it's not wrong to feel both","It may help to name specifically what was lost, even if it's small"] },
+
+  { cores:["Scared","Sad"], name:"Helplessness or vulnerability",
+    color:"#4A90D9", light:"#E0EEFB", dark:"#0C447C",
+    desc:"Fear and sadness together often point to a sense of being without control — feeling like something bad is happening and there's nothing you can do about it. This combination can feel like being very small in a very big situation.",
+    tips:["Focus on one tiny thing you CAN control right now, even something small","It's okay to ask for help — this combination is a signal that support would be useful","Being kind to yourself here matters more than being strong"] },
+
+  { cores:["Angry","Disgusted"], name:"Boundary violation",
+    color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F",
+    desc:"When something has crossed a line for you — a value, a boundary, or something that just feels deeply wrong — anger and disgust often arrive together. Your system is saying: this is not okay and I do not want to be near it.",
+    tips:["Try to name the specific value or boundary that was crossed","You don't have to justify this feeling to anyone — it's information","Distance from the source, even temporarily, can help you think clearly"] },
+
+  { cores:["Scared","Angry","Sad"], name:"Overwhelm or burnout",
+    color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489",
+    desc:"Three or more emotion families at once is a strong signal that your system is overloaded. This is what burnout, emotional overwhelm, or sensory/social exhaustion can feel like — too much, from too many directions, all at the same time.",
+    tips:["This is a signal to reduce input, not push harder","Rest is not optional here — your nervous system genuinely needs a reset","Try to identify the single biggest drain and see if it can be reduced even slightly"] },
+
+  { cores:["Sad","Disgusted"], name:"Shame or self-criticism",
+    color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A",
+    desc:"When sadness turns inward alongside disgust, it can look like shame — feeling bad about yourself, not just about a situation. This combination often comes with an inner critic that is louder than usual.",
+    tips:["Try to notice whether the disgust is aimed at a situation or at yourself","Shame thrives in silence — talking to someone safe can shrink it considerably","Ask yourself: would I speak this way to someone I cared about?"] },
+
+  { cores:["Happy","Scared"], name:"Anxious excitement",
+    color:"#F0A500", light:"#FFF3D0", dark:"#7a5200",
+    desc:"Good things can be frightening too. When something positive is happening but it also feels risky, uncertain, or too good to be true, happy and scared show up together. This is common before big changes, new relationships, or meaningful moments.",
+    tips:["The fear doesn't mean the good thing is wrong — it means it matters to you","It can help to name what specifically feels uncertain or risky","Let yourself enjoy the good part even while the nervous part is present"] },
+
+  { cores:["Angry","Sad","Disgusted"], name:"Betrayal",
+    color:"#C0392B", light:"#FDEDEC", dark:"#922B21",
+    desc:"This combination — anger, hurt, and a sense of wrongness — is one of the clearest emotional signatures of betrayal. Something or someone you trusted did not come through. All three responses make complete sense together.",
+    tips:["Give yourself time before making big decisions in this state","It's okay to feel all three at once — they're all valid responses to the same event","Trust takes time to rebuild, and you get to set that timeline"] },
+
+  { cores:["Scared","Surprised"], name:"Shock or disorientation",
+    color:"#1A8FC1", light:"#D6EEF8", dark:"#0E5A7A",
+    desc:"When something unexpected also feels threatening or destabilising, your brain needs time to catch up with what just happened. This isn't weakness — it's your system trying to process a sudden change to its picture of reality.",
+    tips:["Give yourself time before responding or deciding anything","Grounding techniques (feel your feet, name 5 things you can see) can help","It's okay to say 'I need a moment' — you don't have to process this instantly"] },
+
+  { cores:["Happy","Sad"], name:"Bittersweetness",
+    color:"#8E44AD", light:"#F4ECF7", dark:"#5B2C6F",
+    desc:"Joy and sadness at the same time is one of the most human feelings there is. It often comes with endings, milestones, nostalgia, or moments that are beautiful precisely because they won't last. Both feelings are completely real and neither cancels the other.",
+    tips:["Let yourself feel both without trying to choose one","This combination often means something truly mattered to you","It can help to acknowledge what is ending or changing, rather than pushing past it"] },
+];
+
+function findCombo(coreSet) {
+  if (coreSet.length < 2) return null;
+  // Find best match: most cores in common, requires at least 2 matching
+  var best = null, bestScore = 1;
+  COMBOS.forEach(function(c) {
+    var matches = c.cores.filter(function(core){ return coreSet.indexOf(core) !== -1; }).length;
+    if (matches >= 2 && matches > bestScore) {
+      bestScore = matches;
+      best = c;
+    }
+    // Also accept if ALL combo cores are present (exact or subset match)
+    if (matches === c.cores.length && matches >= 2 && matches >= bestScore) {
+      bestScore = matches;
+      best = c;
+    }
+  });
+  return best;
+}
+
+function renderReveal() {
+  var grouped = {};
+  state.selectedFeelings.forEach(function(f) {
+    var core = feelingMap[f];
+    if (!grouped[core]) grouped[core] = [];
+    grouped[core].push(f);
+  });
+  var coreSet = Object.keys(grouped);
+
+  // Individual core cards
+  var html = coreSet.map(function(core) {
+    var feelings = grouped[core];
+    var w = WHEEL.find(function(x){ return x.core === core; });
+    var pillsHtml = feelings.map(function(f) {
+      return '<span class="rc-pill" style="color:' + w.dark + '">' + esc(f) + '</span>';
+    }).join('');
+    return '<div class="reveal-card" style="background:' + w.light + ';border-color:' + w.color + '40">'
+      + '<div class="rc-arrow" style="color:' + w.color + '">This points to →</div>'
+      + '<div class="rc-core" style="color:' + w.dark + '">' + w.core + '</div>'
+      + '<div class="rc-desc" style="color:' + w.dark + ';opacity:0.85">' + w.desc + '</div>'
+      + '<div class="rc-pills">' + pillsHtml + '</div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('reveal-cards').innerHTML = html;
+
+  // Combination card
+  var combo = findCombo(coreSet);
+  var comboEl = document.getElementById('combo-card');
+  if (combo) {
+    var tipsHtml = combo.tips.map(function(t){ return '<li style="color:'+combo.dark+'">'+t+'</li>'; }).join('');
+    comboEl.innerHTML = '<div class="combo-card" style="background:'+combo.light+';border-color:'+combo.color+'">'
+      + '<div class="combo-label" style="color:'+combo.color+'">Put together, this looks like →</div>'
+      + '<div class="combo-name" style="color:'+combo.dark+'">'+combo.name+'</div>'
+      + '<div class="combo-desc" style="color:'+combo.dark+'">'+combo.desc+'</div>'
+      + '<div class="combo-what" style="color:'+combo.dark+'">Things that might help:</div>'
+      + '<ul class="combo-tips">'+tipsHtml+'</ul>'
+      + '</div>';
+  } else {
+    comboEl.innerHTML = '';
+  }
+}
+
+var chartFilter = 'all';
+
+function renderChart() {
+  var filters = [['all','All']].concat(WHEEL.map(function(w){ return [w.core, w.core]; }));
+  document.getElementById('filter-row').innerHTML = filters.map(function(fv) {
+    return '<button class="filter-chip' + (chartFilter===fv[0]?' active':'') + '" onclick="setFilter(\'' + fv[0] + '\')">' + fv[1] + '</button>';
+  }).join('');
+
+  var filtered = chartFilter==='all'
+    ? entries
+    : entries.filter(function(e){ return e.coreEmotions && e.coreEmotions.indexOf(chartFilter) !== -1; });
+
+  var svgEl = document.getElementById('chart-svg');
+  if (!filtered.length) {
+    svgEl.setAttribute('viewBox','0 0 340 200');
+    svgEl.innerHTML = '<text x="170" y="100" text-anchor="middle" fill="#999" font-size="14" font-family="-apple-system,sans-serif">No data yet</text>';
+    document.getElementById('insights').innerHTML = '';
+    return;
+  }
+
+  var counts = {};
+  filtered.forEach(function(e) {
+    (e.selectedFeelings||[]).forEach(function(f){ counts[f] = (counts[f]||0) + 1; });
+  });
+  var sorted = Object.keys(counts).map(function(k){ return [k, counts[k]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,10);
+  var maxC = Math.max.apply(null, sorted.map(function(s){ return s[1]; }).concat([1]));
+
+  var W=360, H=220, pL=14, pR=14, pT=22, pB=72;
+  var chartW=W-pL-pR, chartH=H-pT-pB;
+  var bw = Math.floor(chartW/sorted.length) - 5;
+
+  var bars = sorted.map(function(item, i) {
+    var feeling = item[0], count = item[1];
+    var w = WHEEL.find(function(wh){ return wh.feelings.indexOf(feeling) !== -1; }) || WHEEL[0];
+    var x  = pL + i*(chartW/sorted.length) + 2;
+    var bh = Math.max(3, Math.round((count/maxC)*chartH));
+    var y  = pT + chartH - bh;
+    var lbl = feeling.length > 9 ? feeling.slice(0,8)+'…' : feeling;
+    var cx  = Math.round(x + bw/2);
+    var rotY = H - pB + 16;
+    return '<rect x="'+Math.round(x)+'" y="'+y+'" width="'+bw+'" height="'+bh+'" fill="'+w.color+'" rx="3" opacity="0.88"/>'
+      + (count>0 ? '<text x="'+cx+'" y="'+(y-5)+'" text-anchor="middle" font-size="10" fill="'+w.color+'" font-weight="600" font-family="-apple-system,sans-serif">'+count+'</text>' : '')
+      + '<text x="'+cx+'" y="'+rotY+'" text-anchor="end" transform="rotate(-40,'+cx+','+rotY+')" font-size="10" fill="#999" font-family="-apple-system,sans-serif">'+esc(lbl)+'</text>';
+  }).join('');
+
+  svgEl.setAttribute('viewBox','0 0 '+W+' '+H);
+  svgEl.innerHTML = bars;
+
+  var topF = sorted[0];
+  var topW = topF ? (WHEEL.find(function(w){ return w.feelings.indexOf(topF[0]) !== -1; }) || WHEEL[0]) : null;
+  var avgInt = filtered.length ? (filtered.reduce(function(s,e){ return s+e.intensity; }, 0) / filtered.length).toFixed(1) : '--';
+  document.getElementById('insights').innerHTML = topW
+    ? '<div class="insight-row">'
+      + '<div class="insight-card" style="background:'+topW.light+'">'
+      + '<div class="insight-label" style="color:'+topW.dark+'">Most frequent feeling</div>'
+      + '<div class="insight-val" style="color:'+topW.dark+'">'+esc(topF[0])+'</div>'
+      + '<div class="insight-sub" style="color:'+topW.dark+'">'+topF[1]+'× · '+topW.core+'</div></div>'
+      + '<div class="insight-card" style="background:var(--bg2)">'
+      + '<div class="insight-label" style="color:var(--text2)">Avg. intensity</div>'
+      + '<div class="insight-val" style="color:var(--text)">'+avgInt+'/10</div>'
+      + '<div class="insight-sub" style="color:var(--text3)">'+filtered.length+' entries total</div></div></div>'
+    : '';
+}
+
+function setFilter(v) { chartFilter = v; renderChart(); }
+
+if (window.navigator.standalone) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var b = document.getElementById('install-banner');
+    if (b) b.style.display = 'none';
+  });
+}
+
+renderFeelings();
+updateAllDots(1);
+</script>
+</body>
+</html>
