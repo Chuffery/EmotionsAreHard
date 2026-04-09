@@ -423,35 +423,53 @@ function toggleFeeling(name, core) {
 
 var _pillListenerAttached = false;
 
-// Delegated listener — attached ONCE, uses touchstart so iOS fires it before any reflow.
-// Suppresses the subsequent click event to prevent double-firing.
 function initPillListener() {
   var list = document.getElementById('feelings-list');
   if (!list || _pillListenerAttached) return;
   _pillListenerAttached = true;
 
-  var tappedRecently = false;
+  var touchStartX = 0;
+  var touchStartY = 0;
+  var touchTarget = null;
+  var tappedAt    = 0;
 
+  // touchstart: record where and what was touched
   list.addEventListener('touchstart', function(e) {
+    var t = e.changedTouches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchTarget = null;
+
     var el = e.target;
     while (el && el !== list) {
       if (el.tagName === 'BUTTON' && el.classList.contains('pill')) {
-        e.preventDefault();
-        var feeling = el.getAttribute('data-feeling');
-        var core    = el.getAttribute('data-core');
-        if (feeling && core) {
-          tappedRecently = true;
-          setTimeout(function(){ tappedRecently = false; }, 600);
-          toggleFeeling(feeling, core);
-        }
-        return;
+        touchTarget = el;
+        break;
       }
       el = el.parentElement;
     }
+  }, {passive: true}); // passive:true so scroll is never blocked
+
+  // touchend: only fire if finger didn't move more than 10px (real tap, not scroll)
+  list.addEventListener('touchend', function(e) {
+    if (!touchTarget) return;
+    var t = e.changedTouches[0];
+    var dx = Math.abs(t.clientX - touchStartX);
+    var dy = Math.abs(t.clientY - touchStartY);
+    if (dx > 10 || dy > 10) { touchTarget = null; return; } // was a scroll
+
+    e.preventDefault(); // suppress the ghost click
+    tappedAt = Date.now();
+
+    var feeling = touchTarget.getAttribute('data-feeling');
+    var core    = touchTarget.getAttribute('data-core');
+    touchTarget = null;
+    if (feeling && core) toggleFeeling(feeling, core);
   }, {passive: false});
 
+  // Block any ghost click that arrives within 600ms of a touch
   list.addEventListener('click', function(e) {
-    if (tappedRecently) {
+    if (Date.now() - tappedAt < 600) {
       e.preventDefault();
       e.stopPropagation();
     }
