@@ -404,7 +404,7 @@ function renderFeelings(query) {
   list.innerHTML = html || '<p style="font-size:14px;color:var(--text3);padding:8px 0">No feelings match that search.</p>';
 }
 
-function filterFeelings(q) { renderFeelings(q); initPillListener(); }
+function filterFeelings(q) { renderFeelings(q); }
 
 function toggleFeeling(name, core) {
   var idx = state.selectedFeelings.indexOf(name);
@@ -421,28 +421,41 @@ function toggleFeeling(name, core) {
   document.getElementById('step1-next').disabled = (state.selectedFeelings.length === 0);
 }
 
-// Delegated listener — resolves tap by actual DOM element, not inline onclick coordinates
-// This fixes iOS Safari hit-detection drift on long flex-wrap pill lists
+var _pillListenerAttached = false;
+
+// Delegated listener — attached ONCE, uses touchstart so iOS fires it before any reflow.
+// Suppresses the subsequent click event to prevent double-firing.
 function initPillListener() {
   var list = document.getElementById('feelings-list');
-  if (!list) return;
-  function handleTap(e) {
-    // Walk up from the tap target to find a button.pill
+  if (!list || _pillListenerAttached) return;
+  _pillListenerAttached = true;
+
+  var tappedRecently = false;
+
+  list.addEventListener('touchstart', function(e) {
     var el = e.target;
     while (el && el !== list) {
       if (el.tagName === 'BUTTON' && el.classList.contains('pill')) {
         e.preventDefault();
-        e.stopPropagation();
         var feeling = el.getAttribute('data-feeling');
         var core    = el.getAttribute('data-core');
-        if (feeling && core) toggleFeeling(feeling, core);
+        if (feeling && core) {
+          tappedRecently = true;
+          setTimeout(function(){ tappedRecently = false; }, 600);
+          toggleFeeling(feeling, core);
+        }
         return;
       }
       el = el.parentElement;
     }
-  }
-  list.addEventListener('touchend', handleTap, {passive: false});
-  list.addEventListener('click',    handleTap, false);
+  }, {passive: false});
+
+  list.addEventListener('click', function(e) {
+    if (tappedRecently) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
 }
 
 
@@ -532,7 +545,6 @@ function resetState() {
   document.getElementById('step1-next').disabled   = true;
   goStep(1);
   renderFeelings();
-  initPillListener();
 }
 
 function showScreen(name) {
