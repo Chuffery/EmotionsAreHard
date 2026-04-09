@@ -379,18 +379,24 @@ function updateAllDots(active) {
 function renderFeelings(query) {
   var q = (query || '').toLowerCase();
   var list = document.getElementById('feelings-list');
+  // Only do a full DOM rebuild on first render or when search query changes.
+  // On toggle we ONLY update styles — never rebuild — so layout never reflows.
+  if (list._built && q === list._lastQuery) return;
+  list._built = true;
+  list._lastQuery = q;
   var html = '';
   WHEEL.forEach(function(w) {
     var matching = q ? w.feelings.filter(function(f){ return f.toLowerCase().indexOf(q) !== -1; }) : w.feelings;
     if (!matching.length) return;
     var pillsHtml = matching.map(function(f) {
       var sel = state.selectedFeelings.indexOf(f) !== -1;
-      var id = pillId(f);
-      var bg    = sel ? w.light : 'var(--bg2)';
-      var col   = sel ? w.dark  : 'var(--text2)';
-      var bc    = sel ? w.color : 'var(--border)';
+      var id  = pillId(f);
+      var bg  = sel ? w.light : 'var(--bg2)';
+      var col = sel ? w.dark  : 'var(--text2)';
+      var bc  = sel ? w.color : 'var(--border)';
       return '<button class="pill" id="' + id + '" '
         + 'data-feeling="' + esc(f) + '" data-core="' + w.core + '" '
+        + 'onclick="toggleFeeling(this.dataset.feeling,this.dataset.core)" '
         + 'style="background:' + bg + ';color:' + col + ';border-color:' + bc + '">'
         + '<span class="pill-dot" style="background:' + w.color + '"></span>'
         + esc(f)
@@ -404,79 +410,30 @@ function renderFeelings(query) {
   list.innerHTML = html || '<p style="font-size:14px;color:var(--text3);padding:8px 0">No feelings match that search.</p>';
 }
 
-function filterFeelings(q) { renderFeelings(q); }
+function filterFeelings(q) {
+  // Force rebuild when search changes
+  var list = document.getElementById('feelings-list');
+  if (list) { list._built = false; }
+  renderFeelings(q);
+}
 
+// Only touches the ONE pill that was tapped. No other DOM changes. No reflow.
 function toggleFeeling(name, core) {
   var idx = state.selectedFeelings.indexOf(name);
   if (idx === -1) state.selectedFeelings.push(name);
   else state.selectedFeelings.splice(idx, 1);
-  var w = WHEEL.find(function(x){ return x.core === core; });
+  var w  = WHEEL.find(function(x){ return x.core === core; });
   var el = document.getElementById(pillId(name));
   if (el && w) {
     var sel = state.selectedFeelings.indexOf(name) !== -1;
-    el.style.background   = sel ? w.light   : 'var(--bg2)';
-    el.style.color        = sel ? w.dark    : 'var(--text2)';
-    el.style.borderColor  = sel ? w.color   : 'var(--border)';
+    el.style.background  = sel ? w.light  : 'var(--bg2)';
+    el.style.color       = sel ? w.dark   : 'var(--text2)';
+    el.style.borderColor = sel ? w.color  : 'var(--border)';
   }
   document.getElementById('step1-next').disabled = (state.selectedFeelings.length === 0);
 }
 
-var _pillListenerAttached = false;
-
-function initPillListener() {
-  var list = document.getElementById('feelings-list');
-  if (!list || _pillListenerAttached) return;
-  _pillListenerAttached = true;
-
-  var touchStartX = 0;
-  var touchStartY = 0;
-  var touchTarget = null;
-  var tappedAt    = 0;
-
-  // touchstart: record where and what was touched
-  list.addEventListener('touchstart', function(e) {
-    var t = e.changedTouches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    touchTarget = null;
-
-    var el = e.target;
-    while (el && el !== list) {
-      if (el.tagName === 'BUTTON' && el.classList.contains('pill')) {
-        touchTarget = el;
-        break;
-      }
-      el = el.parentElement;
-    }
-  }, {passive: true}); // passive:true so scroll is never blocked
-
-  // touchend: only fire if finger didn't move more than 10px (real tap, not scroll)
-  list.addEventListener('touchend', function(e) {
-    if (!touchTarget) return;
-    var t = e.changedTouches[0];
-    var dx = Math.abs(t.clientX - touchStartX);
-    var dy = Math.abs(t.clientY - touchStartY);
-    if (dx > 10 || dy > 10) { touchTarget = null; return; } // was a scroll
-
-    e.preventDefault(); // suppress the ghost click
-    tappedAt = Date.now();
-
-    var feeling = touchTarget.getAttribute('data-feeling');
-    var core    = touchTarget.getAttribute('data-core');
-    touchTarget = null;
-    if (feeling && core) toggleFeeling(feeling, core);
-  }, {passive: false});
-
-  // Block any ghost click that arrives within 600ms of a touch
-  list.addEventListener('click', function(e) {
-    if (Date.now() - tappedAt < 600) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, true);
-}
-
-
+function initPillListener() { /* no-op: plain onclick on stable DOM handles everything */ }
 
 function renderMoods() {
   var html = MOODS.map(function(m) {
@@ -561,6 +518,8 @@ function resetState() {
   document.getElementById('int-disp').textContent  = '5';
   document.getElementById('search-input').value    = '';
   document.getElementById('step1-next').disabled   = true;
+  var list = document.getElementById('feelings-list');
+  if (list) { list._built = false; list._lastQuery = null; }
   goStep(1);
   renderFeelings();
 }
