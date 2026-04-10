@@ -176,6 +176,38 @@ button.filter-chip.active { background: var(--accent); color: white; border-colo
 .insight-val { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 .insight-sub { font-size: 11px; opacity: 0.6; }
 
+/* MOOD GRID */
+.mood-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+button.mood-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; border-radius: var(--radius); border: 1.5px solid var(--border);
+  background: var(--bg2); color: var(--text2);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  cursor: pointer; -webkit-appearance: none; appearance: none;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.1s;
+}
+button.mood-chip:active { opacity: 0.6; }
+.mood-chip-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* THOUGHT PATTERNS */
+.thought-patterns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+button.thought-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-radius: var(--radius); border: 1.5px solid var(--border);
+  background: var(--bg2); color: var(--text2);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  cursor: pointer; -webkit-appearance: none; appearance: none;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.1s; text-align: left;
+}
+button.thought-chip:active { opacity: 0.6; }
+button.thought-chip.selected { border-width: 2px; }
+
+/* BODY HINT CARD */
+.body-hint { border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; line-height: 1.55; border: 1px solid transparent; }
+.body-hint strong { font-weight: 600; display: block; margin-bottom: 3px; }
+
 /* COMBO CARD */
 .combo-card { border-radius: var(--radius-lg); padding: 16px; margin-bottom: 14px; border: 2px solid transparent; }
 .combo-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 5px; }
@@ -232,16 +264,16 @@ button.install-close { float: right; background: none; border: none; font-size: 
 
   <div id="step3" style="display:none">
     <div class="steps" id="dots3"></div>
-    <h1>How strong is this?</h1>
-    <p class="sub">Rate the overall intensity right now — 1 is barely noticeable, 10 is very overwhelming.</p>
+    <h1>How intense is this feeling?</h1>
+    <p class="sub">Rate the intensity right now — 1 is barely noticeable, 10 is very overwhelming.</p>
     <div class="intensity-row">
       <label>Intensity</label>
       <input type="range" min="1" max="10" value="5" step="1" id="intensity-slider" oninput="state.intensity=parseInt(this.value);document.getElementById('int-disp').textContent=this.value">
       <span class="intensity-val" id="int-disp">5</span>
     </div>
-    <h1 style="margin-top:10px">Overall mood</h1>
-    <p class="sub">Pick the one that best describes your general state right now.</p>
-    <div class="mood-row" id="mood-row"></div>
+    <h1 style="margin-top:14px">What's your background mood?</h1>
+    <p class="sub">Mood is different from an emotion — it's the general tone that's been lingering for hours or days, not just right now. Pick any that feel like your background state lately.</p>
+    <div class="mood-grid" id="mood-grid"></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
       <button class="btn btn-primary" id="step3-next" disabled onclick="goStep(4)">Next →</button>
@@ -250,8 +282,11 @@ button.install-close { float: right; background: none; border: none; font-size: 
 
   <div id="step4" style="display:none">
     <div class="steps" id="dots4"></div>
-    <h1>What's on your mind?</h1>
-    <p class="sub">Write any thoughts running through your head. No full sentences needed.</p>
+    <h1>What kinds of thoughts are present?</h1>
+    <p class="sub">Thoughts are the stories we tell ourselves. Tap any patterns that feel familiar right now — they don't have to be exact.</p>
+    <div class="thought-patterns" id="thought-chips"></div>
+    <h1 style="margin-top:4px">Write it out</h1>
+    <p class="sub">Anything else on your mind? Even fragments or half-sentences are fine.</p>
     <textarea id="thoughts-input" rows="3" placeholder="e.g. I keep replaying what happened, I don't know why I feel off…"></textarea>
     <h1>Did something trigger this?</h1>
     <p class="sub">Something specific happened? Or it came out of nowhere? Both are completely valid.</p>
@@ -265,8 +300,9 @@ button.install-close { float: right; background: none; border: none; font-size: 
   <div id="step5" style="display:none">
     <div class="steps" id="dots5"></div>
     <h1>What does your body feel?</h1>
-    <p class="sub">Physical sensations are clues. Tap any that are present right now.</p>
+    <p class="sub">Your body often knows what you're feeling before your mind does. Tap any sensations present right now.</p>
     <div class="tag-grid" id="body-tags"></div>
+    <div id="body-hint"></div>
     <h1>What do you need right now?</h1>
     <p class="sub">Even a guess helps. What might make this a little easier?</p>
     <div class="tag-grid" id="needs-tags"></div>
@@ -330,12 +366,59 @@ const WHEEL = [
     feelings:["Shocked","Amazed","Speechless","Blindsided","Disbelieving","Awed","Curious","Astonished","Disoriented","Caught off guard","Stunned","Baffled","Wide-eyed","Perplexed","Taken aback","Fascinated","Thrown off","In disbelief"] },
 ];
 
-const MOODS = [
-  {label:"Very low", icon:"😞", color:"#4A90D9"},
-  {label:"Low",      icon:"😕", color:"#7B68EE"},
-  {label:"Neutral",  icon:"😐", color:"#888780"},
-  {label:"Good",     icon:"🙂", color:"#F0A500"},
-  {label:"Great",    icon:"😊", color:"#3DAA6E"},
+// MOOD GROUPS — background states that linger for hours or days (from PDF definition)
+const MOOD_GROUPS = [
+  { label:"Anxious",     color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489" },
+  { label:"Irritable",   color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F" },
+  { label:"Overwhelmed", color:"#9B59B6", light:"#F5EEF8", dark:"#6C3483" },
+  { label:"Restless",    color:"#E05C8A", light:"#FDE8F1", dark:"#72243E" },
+  { label:"Numb",        color:"#888780", light:"#F1F1F0", dark:"#3a3a38" },
+  { label:"Low",         color:"#4A90D9", light:"#E0EEFB", dark:"#0C447C" },
+  { label:"Melancholy",  color:"#5B8DB8", light:"#E8F1F8", dark:"#2C4D6E" },
+  { label:"Hopeless",    color:"#3a5a7a", light:"#E0EAF0", dark:"#1a2a3a" },
+  { label:"Calm",        color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A" },
+  { label:"Content",     color:"#5DAA6E", light:"#E4F5EC", dark:"#2A6040" },
+  { label:"Energized",   color:"#F0A500", light:"#FFF3D0", dark:"#7a5200" },
+  { label:"Optimistic",  color:"#E8A020", light:"#FEF3DC", dark:"#7a4800" },
+  { label:"Happy",       color:"#E8C030", light:"#FEF8DC", dark:"#7a5800" },
+  { label:"Focused",     color:"#1A8FC1", light:"#D6EEF8", dark:"#0E5A7A" },
+  { label:"Drained",     color:"#7a7a7a", light:"#EFEFEF", dark:"#3a3a3a" },
+  { label:"Tense",       color:"#C0392B", light:"#FDEDEC", dark:"#922B21" },
+];
+
+// THOUGHT PATTERNS — cognitive styles from PDF
+const THOUGHT_PATTERNS = [
+  { label:"Self-critical",   example:"&ldquo;I&apos;m not good enough&rdquo;",              color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F" },
+  { label:"Catastrophising", example:"&ldquo;Everything is going wrong&rdquo;",             color:"#9B59B6", light:"#F5EEF8", dark:"#6C3483" },
+  { label:"Worrying",        example:"&ldquo;What if something goes wrong&rdquo;",          color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489" },
+  { label:"Replaying",       example:"&ldquo;I keep going over what happened&rdquo;",       color:"#E05C8A", light:"#FDE8F1", dark:"#72243E" },
+  { label:"Self-doubting",   example:"&ldquo;I can&apos;t handle this&rdquo;",              color:"#C0392B", light:"#FDEDEC", dark:"#922B21" },
+  { label:"Blaming self",    example:"&ldquo;It&apos;s my fault&rdquo;",                    color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F" },
+  { label:"Blaming others",  example:"&ldquo;They made this happen&rdquo;",                 color:"#E07820", light:"#FEEBD8", dark:"#8a4010" },
+  { label:"Future-focused",  example:"&ldquo;I&apos;m dreading what&apos;s next&rdquo;",   color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489" },
+  { label:"Hopeful",         example:"&ldquo;This could still work out&rdquo;",             color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A" },
+  { label:"Problem-solving", example:"&ldquo;What can I actually do?&rdquo;",               color:"#1A8FC1", light:"#D6EEF8", dark:"#0E5A7A" },
+  { label:"Accepting",       example:"&ldquo;This is hard but I&apos;ll get through it&rdquo;", color:"#5DAA6E", light:"#E4F5EC", dark:"#2A6040" },
+  { label:"Disconnected",    example:"&ldquo;I feel like I&apos;m watching from outside&rdquo;", color:"#888780", light:"#F1F1F0", dark:"#3a3a38" },
+];
+
+// BODY → EMOTION MAP from PDF
+const BODY_EMOTION_MAP = [
+  { sensations:["Tight chest","Fast heartbeat","Short of breath","Shaky","Sweating"],
+    hint:"Tight chest, racing heart and shakiness are often signs of Fear or Anxiety.",
+    color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489" },
+  { sensations:["Clenched jaw","Hot/flushed","Tense muscles","Fast heartbeat"],
+    hint:"Jaw tension, flushing and muscle tension are common with Anger or Frustration.",
+    color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F" },
+  { sensations:["Heavy limbs","Tired","Low energy","Stomach ache","Numb"],
+    hint:"Heaviness, exhaustion and low energy often accompany Sadness or Grief.",
+    color:"#4A90D9", light:"#E0EEFB", dark:"#0C447C" },
+  { sensations:["Nauseous","Pins & needles","Frozen/still","Headache"],
+    hint:"Nausea, freezing and pins & needles can signal Disgust, Shock or overwhelm.",
+    color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A" },
+  { sensations:["Restless","Fast heartbeat","Shaky"],
+    hint:"Restlessness and a racing heart can also be Excitement — not all activation is bad.",
+    color:"#F0A500", light:"#FFF3D0", dark:"#7a5200" },
 ];
 
 const BODY  = ["Tight chest","Fast heartbeat","Tense muscles","Stomach ache","Headache","Shaky","Hot/flushed","Cold","Tired","Restless","Nauseous","Heavy limbs","Short of breath","Clenched jaw","Sweating","Pins & needles","Frozen/still","Low energy"];
@@ -344,7 +427,7 @@ const NEEDS = ["Quiet time alone","Physical comfort","Talk to someone","Movement
 const feelingMap = {};
 WHEEL.forEach(w => w.feelings.forEach(f => feelingMap[f] = w.core));
 
-let state = {step:1, selectedFeelings:[], mood:null, intensity:5, body:[], needs:[]};
+let state = {step:1, selectedFeelings:[], moods:[], thoughtPatterns:[], intensity:5, body:[], needs:[]};
 let entries = [];
 try { entries = JSON.parse(localStorage.getItem('emo_v2') || '[]'); } catch(e){}
 
@@ -358,13 +441,14 @@ function goStep(n) {
   }
   updateAllDots(n);
   if (n===2) renderReveal();
-  if (n===3) renderMoods();
+  if (n===3) renderMoodGrid();
+  if (n===4) renderThoughtChips();
   if (n===5) renderBodyNeeds();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function updateAllDots(active) {
-  const labels = ['Feelings','Understanding','Intensity','Thoughts','Body & needs'];
+  const labels = ['Feelings','Understanding','Intensity & Mood','Thoughts','Body & needs'];
   ['1','2','3','4','5'].forEach(function(suf, i) {
     var el = document.getElementById('dots'+suf);
     if (!el) return;
@@ -435,37 +519,95 @@ function toggleFeeling(name, core) {
 
 function initPillListener() { /* no-op: plain onclick on stable DOM handles everything */ }
 
-function renderMoods() {
-  var html = MOODS.map(function(m) {
-    var sel = state.mood === m.label;
+function renderMoodGrid() {
+  var html = MOOD_GROUPS.map(function(m) {
+    var sel = state.moods.indexOf(m.label) !== -1;
     var style = sel
-      ? 'border-color:' + m.color + ';background:' + m.color + '22;color:' + m.color
+      ? 'background:' + m.light + ';color:' + m.dark + ';border-color:' + m.color
       : '';
-    return '<button class="mood-btn" style="' + style + '" onclick="selectMood(\'' + m.label + '\')">'
-      + '<span class="mood-icon">' + m.icon + '</span>'
+    return '<button class="mood-chip" style="' + style + '" onclick="toggleMood(\'' + m.label + '\')">'
+      + '<span class="mood-chip-dot" style="background:' + m.color + '"></span>'
       + m.label
       + '</button>';
   }).join('');
-  document.getElementById('mood-row').innerHTML = html;
-  document.getElementById('step3-next').disabled = !state.mood;
+  document.getElementById('mood-grid').innerHTML = html;
+  // Mood is optional — always enable next
+  document.getElementById('step3-next').disabled = false;
 }
 
-function selectMood(label) {
-  state.mood = label;
-  renderMoods();
+function toggleMood(label) {
+  var idx = state.moods.indexOf(label);
+  if (idx === -1) state.moods.push(label);
+  else state.moods.splice(idx, 1);
+  renderMoodGrid();
+}
+
+function renderThoughtChips() {
+  var html = THOUGHT_PATTERNS.map(function(t) {
+    var sel = state.thoughtPatterns.indexOf(t.label) !== -1;
+    var style = sel
+      ? 'background:' + t.light + ';color:' + t.dark + ';border-color:' + t.color
+      : '';
+    return '<button class="thought-chip' + (sel?' selected':'') + '" style="' + style + '" onclick="toggleThought(\'' + t.label + '\')">'
+      + '<span style="display:block;font-size:12px;font-weight:600">' + t.label + '</span>'
+      + '<span style="display:block;font-size:11px;opacity:0.75;margin-top:1px">' + t.example + '</span>'
+      + '</button>';
+  }).join('');
+  document.getElementById('thought-chips').innerHTML = html;
+}
+
+function toggleThought(label) {
+  var idx = state.thoughtPatterns.indexOf(label);
+  if (idx === -1) state.thoughtPatterns.push(label);
+  else state.thoughtPatterns.splice(idx, 1);
+  renderThoughtChips();
 }
 
 function renderBodyNeeds() {
   document.getElementById('body-tags').innerHTML = BODY.map(function(b) {
     var sel = state.body.indexOf(b) !== -1;
     var style = sel ? 'background:#E0EEFB;color:#0C447C;border-color:#4A90D9' : '';
-    return '<button class="tag" style="' + style + '" onclick="toggleArr(\'body\',\'' + esc(b) + '\',this,\'#E0EEFB\',\'#0C447C\',\'#4A90D9\')">' + esc(b) + '</button>';
+    return '<button class="tag" style="' + style + '" onclick="toggleBodyTag(\'' + esc(b) + '\')">' + esc(b) + '</button>';
   }).join('');
   document.getElementById('needs-tags').innerHTML = NEEDS.map(function(n) {
     var sel = state.needs.indexOf(n) !== -1;
     var style = sel ? 'background:#E0F4EA;color:#27500A;border-color:#3DAA6E' : '';
     return '<button class="tag" style="' + style + '" onclick="toggleArr(\'needs\',\'' + esc(n) + '\',this,\'#E0F4EA\',\'#27500A\',\'#3DAA6E\')">' + esc(n) + '</button>';
   }).join('');
+  updateBodyHint();
+}
+
+function toggleBodyTag(name) {
+  var idx = state.body.indexOf(name);
+  var el = document.querySelector('[onclick="toggleBodyTag(\'' + name + '\')"]');
+  if (idx === -1) {
+    state.body.push(name);
+    if (el) { el.style.background='#E0EEFB'; el.style.color='#0C447C'; el.style.borderColor='#4A90D9'; }
+  } else {
+    state.body.splice(idx, 1);
+    if (el) { el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+  }
+  updateBodyHint();
+}
+
+function updateBodyHint() {
+  var hintEl = document.getElementById('body-hint');
+  if (!hintEl) return;
+  if (state.body.length === 0) { hintEl.innerHTML = ''; return; }
+  // Find best matching body-emotion map entry
+  var best = null, bestScore = 0;
+  BODY_EMOTION_MAP.forEach(function(map) {
+    var matches = map.sensations.filter(function(s){ return state.body.indexOf(s) !== -1; }).length;
+    if (matches > bestScore) { bestScore = matches; best = map; }
+  });
+  if (best && bestScore >= 1) {
+    hintEl.innerHTML = '<div class="body-hint" style="background:' + best.light + ';border-color:' + best.color + ';color:' + best.dark + '">'
+      + '<strong>Your body might be signalling:</strong>'
+      + best.hint
+      + '</div>';
+  } else {
+    hintEl.innerHTML = '';
+  }
 }
 
 function toggleArr(arr, name, el, bg, color, border) {
@@ -497,7 +639,8 @@ function saveEntry() {
     selectedFeelings: state.selectedFeelings.slice(),
     coreEmotions: Object.keys(grouped),
     grouped: grouped,
-    mood: state.mood,
+    moods: state.moods.slice(),
+    thoughtPatterns: state.thoughtPatterns.slice(),
     intensity: state.intensity,
     thoughts: document.getElementById('thoughts-input').value,
     trigger:  document.getElementById('trigger-input').value,
@@ -511,7 +654,7 @@ function saveEntry() {
 }
 
 function resetState() {
-  state = {step:1, selectedFeelings:[], mood:null, intensity:5, body:[], needs:[]};
+  state = {step:1, selectedFeelings:[], moods:[], thoughtPatterns:[], intensity:5, body:[], needs:[]};
   document.getElementById('thoughts-input').value = '';
   document.getElementById('trigger-input').value  = '';
   document.getElementById('intensity-slider').value = 5;
@@ -543,7 +686,6 @@ function renderHistory() {
     var dt = new Date(e.ts);
     var timeStr = dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
                 + ' · ' + dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    var moodObj = MOODS.find(function(m){ return m.label===e.mood; });
     var coreColors = (e.coreEmotions||[]).map(function(c){ return WHEEL.find(function(w){ return w.core===c; }); }).filter(Boolean);
     return '<div class="log-entry">'
       + '<div class="log-hdr">'
@@ -552,8 +694,9 @@ function renderHistory() {
       + '</div>'
       + '<div class="log-cores">' + coreColors.map(function(w){ return '<span class="log-core" style="background:'+w.light+';color:'+w.dark+'">'+w.core+'</span>'; }).join('') + '</div>'
       + '<div class="log-chips">'
-      + (moodObj ? '<span class="log-chip" style="background:'+moodObj.color+'18;color:'+moodObj.color+'">'+moodObj.icon+' '+moodObj.label+'</span>' : '')
+      + (e.moods&&e.moods.length ? e.moods.slice(0,3).map(function(m){ var mg=MOOD_GROUPS.find(function(x){return x.label===m;}); return mg?'<span class="log-chip" style="background:'+mg.light+';color:'+mg.dark+'">'+m+'</span>':''; }).join('') : '')
       + '<span class="log-chip">Intensity '+e.intensity+'/10</span>'
+      + (e.thoughtPatterns&&e.thoughtPatterns.length ? '<span class="log-chip">'+e.thoughtPatterns.slice(0,2).join(', ')+'</span>' : '')
       + e.body.slice(0,2).map(function(b){ return '<span class="log-chip">'+esc(b)+'</span>'; }).join('')
       + '</div>'
       + (e.thoughts ? '<div class="log-note"><strong>Thoughts:</strong> '+esc(e.thoughts.slice(0,100))+(e.thoughts.length>100?'…':'')+'</div>' : '')
@@ -563,58 +706,52 @@ function renderHistory() {
   }).join('');
 }
 
-// COMBINATION PATTERNS
-// Each pattern lists cores it matches (2+ needed), a name, description, color, and tips
+// COMBINATION PATTERNS — aligned with therapist PDF definitions
 var COMBOS = [
-  { cores:["Scared","Angry"], name:"Defensive overload",
+  { cores:["Angry","Scared"], name:"Anxiety",
     color:"#9B59B6", light:"#F5EEF8", dark:"#6C3483",
-    desc:"When fear and anger show up together, your nervous system is in high-alert protection mode. Something feels both threatening AND unfair at the same time. This is exhausting because your brain is trying to fight and flee simultaneously.",
-    tips:["Give yourself permission to feel both — they don't cancel each other out","Try to separate the threat (what scares you) from the injustice (what angers you)","Physical movement like a short walk can help discharge the built-up tension"] },
+    desc:"When you feel both afraid of a situation AND angry about it, the result is anxiety. The fear comes from uncertainty about the outcome, while the anger comes from feeling trapped or unable to control what's happening.",
+    tips:["Name what specifically feels out of your control right now","Try to separate what you can influence from what you can't","Grounding (slow breath, feel your feet) can calm the body's alarm system"] },
 
-  { cores:["Sad","Angry"], name:"Grief or loss",
+  { cores:["Sad","Angry"], name:"Frustration",
     color:"#E05C8A", light:"#FDE8F1", dark:"#72243E",
-    desc:"This combination often means something important was taken away, ended, or didn't go the way you needed. The sadness is the loss itself, and the anger is the part of you that knows it shouldn't have happened, or that it wasn't fair.",
-    tips:["Let yourself feel the loss without rushing to 'fix' it","Anger during grief is completely normal — it's not wrong to feel both","It may help to name specifically what was lost, even if it's small"] },
+    desc:"Frustration happens when sadness and anger arrive together — when you're both disappointed by something and angry that it happened or couldn't be changed. It often follows unmet expectations or blocked goals.",
+    tips:["Acknowledge both the disappointment AND the anger — neither cancels the other","Ask: what did I expect that didn't happen?","Small actions toward the blocked goal can help, even symbolic ones"] },
 
-  { cores:["Scared","Sad"], name:"Helplessness or vulnerability",
-    color:"#4A90D9", light:"#E0EEFB", dark:"#0C447C",
-    desc:"Fear and sadness together often point to a sense of being without control — feeling like something bad is happening and there's nothing you can do about it. This combination can feel like being very small in a very big situation.",
-    tips:["Focus on one tiny thing you CAN control right now, even something small","It's okay to ask for help — this combination is a signal that support would be useful","Being kind to yourself here matters more than being strong"] },
-
-  { cores:["Angry","Disgusted"], name:"Boundary violation",
-    color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F",
-    desc:"When something has crossed a line for you — a value, a boundary, or something that just feels deeply wrong — anger and disgust often arrive together. Your system is saying: this is not okay and I do not want to be near it.",
-    tips:["Try to name the specific value or boundary that was crossed","You don't have to justify this feeling to anyone — it's information","Distance from the source, even temporarily, can help you think clearly"] },
-
-  { cores:["Scared","Angry","Sad"], name:"Overwhelm or burnout",
-    color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489",
-    desc:"Three or more emotion families at once is a strong signal that your system is overloaded. This is what burnout, emotional overwhelm, or sensory/social exhaustion can feel like — too much, from too many directions, all at the same time.",
-    tips:["This is a signal to reduce input, not push harder","Rest is not optional here — your nervous system genuinely needs a reset","Try to identify the single biggest drain and see if it can be reduced even slightly"] },
-
-  { cores:["Sad","Disgusted"], name:"Shame or self-criticism",
-    color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A",
-    desc:"When sadness turns inward alongside disgust, it can look like shame — feeling bad about yourself, not just about a situation. This combination often comes with an inner critic that is louder than usual.",
-    tips:["Try to notice whether the disgust is aimed at a situation or at yourself","Shame thrives in silence — talking to someone safe can shrink it considerably","Ask yourself: would I speak this way to someone I cared about?"] },
-
-  { cores:["Happy","Scared"], name:"Anxious excitement",
+  { cores:["Happy","Scared"], name:"Excitement",
     color:"#F0A500", light:"#FFF3D0", dark:"#7a5200",
-    desc:"Good things can be frightening too. When something positive is happening but it also feels risky, uncertain, or too good to be true, happy and scared show up together. This is common before big changes, new relationships, or meaningful moments.",
-    tips:["The fear doesn't mean the good thing is wrong — it means it matters to you","It can help to name what specifically feels uncertain or risky","Let yourself enjoy the good part even while the nervous part is present"] },
+    desc:"When something positive is happening but there's also nervousness about what comes next, joy and fear combine into excitement. The joy comes from anticipation; the fear adds nervous energy about the unknown.",
+    tips:["The anxiety doesn't mean the good thing is wrong — it means it matters to you","Name what specifically feels uncertain","Let yourself enjoy the positive part even while the nervous part is also present"] },
+
+  { cores:["Sad","Disgusted"], name:"Repulsion or Shame",
+    color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A",
+    desc:"When sadness combines with disgust — whether toward a situation or toward yourself — it creates either repulsion (directed outward) or shame (directed inward). Shame in particular is a deep reaction that combines sorrow with a sense of wrongness.",
+    tips:["Try to notice whether the disgust is aimed at a situation or at yourself","Shame thrives in silence — talking to a trusted person can reduce its intensity","Ask yourself: would I speak this way to someone I cared about?"] },
+
+  { cores:["Angry","Disgusted"], name:"Contempt",
+    color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F",
+    desc:"When disgust and anger combine, the result is contempt — a feeling of disdain and judgment toward someone or something. It often arises when another person's behavior conflicts sharply with your values.",
+    tips:["Notice if contempt is protecting a value that matters to you","Distance from the source can help you process without escalating","Try to separate the behavior you find wrong from the person as a whole"] },
+
+  { cores:["Surprised","Scared"], name:"Shock",
+    color:"#1A8FC1", light:"#D6EEF8", dark:"#0E5A7A",
+    desc:"When something unexpected also feels threatening or destabilising, surprise and fear combine into shock. Your brain needs time to catch up with what just happened — this is a normal protective response, not weakness.",
+    tips:["Give yourself time before responding or deciding anything","Grounding helps: feel your feet, name 5 things you can see","It's completely okay to say 'I need a moment' — you don't have to process it instantly"] },
+
+  { cores:["Happy","Sad"], name:"Bittersweetness or Melancholy",
+    color:"#8E44AD", light:"#F4ECF7", dark:"#5B2C6F",
+    desc:"Joy and sadness at the same time is one of the most human feelings there is — the PDF calls this melancholy. It often comes with endings, milestones, nostalgia, or moments that are beautiful precisely because they won't last.",
+    tips:["Let yourself feel both without trying to choose one","This combination often means something truly mattered to you","Acknowledge what is ending or changing, rather than pushing past it"] },
+
+  { cores:["Scared","Angry","Sad"], name:"Overwhelm or Burnout",
+    color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489",
+    desc:"Three or more emotion families at once is a strong signal that your system is overloaded. This is what burnout, emotional overwhelm, or sensory exhaustion can feel like — too much, from too many directions, all at the same time.",
+    tips:["This is a signal to reduce input and demands, not push harder","Rest is not optional here — your nervous system genuinely needs a reset","Try to identify the single biggest drain and see if it can be reduced even slightly"] },
 
   { cores:["Angry","Sad","Disgusted"], name:"Betrayal",
     color:"#C0392B", light:"#FDEDEC", dark:"#922B21",
     desc:"This combination — anger, hurt, and a sense of wrongness — is one of the clearest emotional signatures of betrayal. Something or someone you trusted did not come through. All three responses make complete sense together.",
-    tips:["Give yourself time before making big decisions in this state","It's okay to feel all three at once — they're all valid responses to the same event","Trust takes time to rebuild, and you get to set that timeline"] },
-
-  { cores:["Scared","Surprised"], name:"Shock or disorientation",
-    color:"#1A8FC1", light:"#D6EEF8", dark:"#0E5A7A",
-    desc:"When something unexpected also feels threatening or destabilising, your brain needs time to catch up with what just happened. This isn't weakness — it's your system trying to process a sudden change to its picture of reality.",
-    tips:["Give yourself time before responding or deciding anything","Grounding techniques (feel your feet, name 5 things you can see) can help","It's okay to say 'I need a moment' — you don't have to process this instantly"] },
-
-  { cores:["Happy","Sad"], name:"Bittersweetness",
-    color:"#8E44AD", light:"#F4ECF7", dark:"#5B2C6F",
-    desc:"Joy and sadness at the same time is one of the most human feelings there is. It often comes with endings, milestones, nostalgia, or moments that are beautiful precisely because they won't last. Both feelings are completely real and neither cancels the other.",
-    tips:["Let yourself feel both without trying to choose one","This combination often means something truly mattered to you","It can help to acknowledge what is ending or changing, rather than pushing past it"] },
+    tips:["Give yourself time before making big decisions in this state","All three feelings are valid responses to the same event — they don't contradict each other","Trust takes time to rebuild, and you get to set that timeline"] },
 ];
 
 function findCombo(coreSet) {
