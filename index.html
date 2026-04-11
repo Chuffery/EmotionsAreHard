@@ -23,7 +23,14 @@
     --bg: #111111; --bg2: #1e1e1e; --bg3: #2a2a2a;
     --text: #f0f0f0; --text2: #aaaaaa; --text3: #666666;
     --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+    --accent: #5BA3E8;
   }
+  button.btn-primary:disabled { background: #2a2a3a; color: #5a5a7a; }
+  button.pill { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
+  button.tag  { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
+  button.mood-chip { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
+  button.thought-chip { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
+  .rc-pill { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
 }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; }
 #app { max-width: 500px; margin: 0 auto; padding: 16px 16px calc(72px + var(--safe-bottom)); min-height: 100vh; }
@@ -491,8 +498,9 @@ function renderFeelings(query) {
     var pillsHtml = matching.map(function(f) {
       var sel = state.selectedFeelings.indexOf(f) !== -1;
       var id  = pillId(f);
-      var bg  = sel ? w.light : 'var(--bg2)';
-      var col = sel ? w.dark  : 'var(--text2)';
+      var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var bg  = sel ? (isDark ? w.color+'33' : w.light) : 'var(--bg2)';
+      var col = sel ? (isDark ? w.color       : w.dark)  : 'var(--text2)';
       var bc  = sel ? w.color : 'var(--border)';
       return '<button class="pill" id="' + id + '" '
         + 'data-feeling="' + esc(f) + '" data-core="' + w.core + '" '
@@ -517,6 +525,16 @@ function filterFeelings(q) {
   renderFeelings(q);
 }
 
+// Returns dark-mode aware selected pill colors
+function pillSelColors(w) {
+  var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return {
+    bg:     dark ? w.color + '33' : w.light,   // 20% tint in dark, pastel in light
+    color:  dark ? w.color        : w.dark,     // vivid color text in dark, dark text in light
+    border: w.color
+  };
+}
+
 // Only touches the ONE pill that was tapped. No other DOM changes. No reflow.
 function toggleFeeling(name, core) {
   var idx = state.selectedFeelings.indexOf(name);
@@ -526,9 +544,16 @@ function toggleFeeling(name, core) {
   var el = document.getElementById(pillId(name));
   if (el && w) {
     var sel = state.selectedFeelings.indexOf(name) !== -1;
-    el.style.background  = sel ? w.light  : 'var(--bg2)';
-    el.style.color       = sel ? w.dark   : 'var(--text2)';
-    el.style.borderColor = sel ? w.color  : 'var(--border)';
+    if (sel) {
+      var c = pillSelColors(w);
+      el.style.background  = c.bg;
+      el.style.color       = c.color;
+      el.style.borderColor = c.border;
+    } else {
+      el.style.background  = 'var(--bg2)';
+      el.style.color       = 'var(--text2)';
+      el.style.borderColor = 'var(--border)';
+    }
   }
   document.getElementById('step1-next').disabled = (state.selectedFeelings.length === 0);
 }
@@ -538,8 +563,9 @@ function initPillListener() { /* no-op: plain onclick on stable DOM handles ever
 function renderMoodGrid() {
   var html = MOOD_GROUPS.map(function(m) {
     var sel = state.moods.indexOf(m.label) !== -1;
+    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     var style = sel
-      ? 'background:' + m.light + ';color:' + m.dark + ';border-color:' + m.color
+      ? 'background:'+(isDark?m.color+'33':m.light)+';color:'+(isDark?m.color:m.dark)+';border-color:'+m.color
       : '';
     return '<button class="mood-chip" style="' + style + '" onclick="toggleMood(\'' + m.label + '\')">'
       + '<span class="mood-chip-dot" style="background:' + m.color + '"></span>'
@@ -567,7 +593,8 @@ function renderThoughtChips() {
   var html = tones.map(function(tone) {
     var chips = THOUGHT_PATTERNS.filter(function(t){ return t.tone === tone.key; }).map(function(t) {
       var sel = state.thoughtPatterns.indexOf(t.label) !== -1;
-      var style = sel ? 'background:'+t.light+';color:'+t.dark+';border-color:'+t.color : '';
+      var isDarkT = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var style = sel ? 'background:'+(isDarkT?t.color+'33':t.light)+';color:'+(isDarkT?t.color:t.dark)+';border-color:'+t.color : '';
       return '<button class="thought-chip'+(sel?' selected':'')+'" style="'+style+'" onclick="toggleThought(\''+t.label+'\')"><span style="display:block;font-size:12px;font-weight:600">'+t.label+'</span><span style="display:block;font-size:11px;opacity:0.75;margin-top:1px">'+t.example+'</span></button>';
     }).join('');
     return '<p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:'+tone.color+';margin:12px 0 7px">'+tone.label+'</p><div class="thought-patterns">'+chips+'</div>';
@@ -620,7 +647,8 @@ function updateBodyHint() {
     if (matches > bestScore) { bestScore = matches; best = map; }
   });
   if (best && bestScore >= 1) {
-    hintEl.innerHTML = '<div class="body-hint" style="background:' + best.light + ';border-color:' + best.color + ';color:' + best.dark + '">'
+    var isDarkH = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    hintEl.innerHTML = '<div class="body-hint" style="background:'+(isDarkH?best.color+'22':best.light)+';border-color:'+best.color+';color:'+(isDarkH?best.color:best.dark)+'">'
       + '<strong>Your body might be signalling:</strong>'
       + best.hint
       + '</div>';
