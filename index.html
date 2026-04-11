@@ -26,11 +26,14 @@
     --accent: #5BA3E8;
   }
   button.btn-primary:disabled { background: #2a2a3a; color: #5a5a7a; }
+  button.btn-secondary { background: #252525; color: #cccccc; border: 1px solid rgba(255,255,255,0.25); }
   button.pill { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
   button.tag  { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
   button.mood-chip { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
   button.thought-chip { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
   .rc-pill { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+  .reveal-card { border-width: 1.5px; }
+  .combo-card  { border-width: 2px; }
 }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; }
 #app { max-width: 500px; margin: 0 auto; padding: 16px 16px calc(72px + var(--safe-bottom)); min-height: 100vh; }
@@ -739,9 +742,9 @@ function renderHistory() {
       + '<span class="log-feelings">' + esc(e.selectedFeelings.slice(0,4).join(', ')) + (e.selectedFeelings.length>4?'…':'') + '</span>'
       + '<span class="log-time">' + timeStr + '</span>'
       + '</div>'
-      + '<div class="log-cores">' + coreColors.map(function(w){ return '<span class="log-core" style="background:'+w.light+';color:'+w.dark+'">'+w.core+'</span>'; }).join('') + '</div>'
+      + '<div class="log-cores">' + coreColors.map(function(w){ var dmL=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; return '<span class="log-core" style="background:'+(dmL?w.color+'22':w.light)+';color:'+(dmL?w.color:w.dark)+'">'+w.core+'</span>'; }).join('') + '</div>'
       + '<div class="log-chips">'
-      + (e.moods&&e.moods.length ? e.moods.slice(0,3).map(function(m){ var mg=MOOD_GROUPS.find(function(x){return x.label===m;}); return mg?'<span class="log-chip" style="background:'+mg.light+';color:'+mg.dark+'">'+m+'</span>':''; }).join('') : '')
+      + (e.moods&&e.moods.length ? e.moods.slice(0,3).map(function(m){ var mg=MOOD_GROUPS.find(function(x){return x.label===m;}); var dmM=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; return mg?'<span class="log-chip" style="background:'+(dmM?mg.color+'22':mg.light)+';color:'+(dmM?mg.color:mg.dark)+'">'+m+'</span>':''; }).join('') : '')
       + '<span class="log-chip">Intensity '+e.intensity+'/10</span>'
       + (e.thoughtPatterns&&e.thoughtPatterns.length ? '<span class="log-chip">'+e.thoughtPatterns.slice(0,2).join(', ')+'</span>' : '')
       + e.body.slice(0,2).map(function(b){ return '<span class="log-chip">'+esc(b)+'</span>'; }).join('')
@@ -847,17 +850,24 @@ function renderReveal() {
   });
   var coreSet = Object.keys(grouped);
 
+  var dm = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  function cardBg(c)    { return dm ? c + '22' : c; }  // c = light hex in light, color+'22' in dark
+  function cardText(w)  { return dm ? w.color  : w.dark; }
+  function cardBorder(w){ return dm ? w.color  : w.color + '40'; }
+  function cardLightBg(w){ return dm ? w.color+'1a' : w.light; }
+
   // Individual core cards
   var html = coreSet.map(function(core) {
     var feelings = grouped[core];
     var w = WHEEL.find(function(x){ return x.core === core; });
     var pillsHtml = feelings.map(function(f) {
-      return '<span class="rc-pill" style="color:' + w.dark + '">' + esc(f) + '</span>';
+      return '<span class="rc-pill" style="color:' + cardText(w) + '">' + esc(f) + '</span>';
     }).join('');
-    return '<div class="reveal-card" style="background:' + w.light + ';border-color:' + w.color + '40">'
+    return '<div class="reveal-card" style="background:' + cardLightBg(w) + ';border-color:' + cardBorder(w) + '">'
       + '<div class="rc-arrow" style="color:' + w.color + '">This points to →</div>'
-      + '<div class="rc-core" style="color:' + w.dark + '">' + w.core + '</div>'
-      + '<div class="rc-desc" style="color:' + w.dark + ';opacity:0.85">' + w.desc + '</div>'
+      + '<div class="rc-core" style="color:' + cardText(w) + '">' + w.core + '</div>'
+      + '<div class="rc-desc" style="color:' + cardText(w) + ';opacity:0.85">' + w.desc + '</div>'
       + '<div class="rc-pills">' + pillsHtml + '</div>'
       + '</div>';
   }).join('');
@@ -867,12 +877,15 @@ function renderReveal() {
   var combo = findCombo(grouped);
   var comboEl = document.getElementById('combo-card');
   if (combo) {
-    var tipsHtml = combo.tips.map(function(t){ return '<li style="color:'+combo.dark+'">'+t+'</li>'; }).join('');
-    comboEl.innerHTML = '<div class="combo-card" style="background:'+combo.light+';border-color:'+combo.color+'">'
+    var comboBg     = dm ? combo.color + '1a' : combo.light;
+    var comboBorder = dm ? combo.color        : combo.color;
+    var comboTxt    = dm ? combo.color        : combo.dark;
+    var tipsHtml = combo.tips.map(function(t){ return '<li style="color:'+comboTxt+'">'+t+'</li>'; }).join('');
+    comboEl.innerHTML = '<div class="combo-card" style="background:'+comboBg+';border-color:'+comboBorder+'">'
       + '<div class="combo-label" style="color:'+combo.color+'">Put together, this looks like →</div>'
-      + '<div class="combo-name" style="color:'+combo.dark+'">'+combo.name+'</div>'
-      + '<div class="combo-desc" style="color:'+combo.dark+'">'+combo.desc+'</div>'
-      + '<div class="combo-what" style="color:'+combo.dark+'">Things that might help:</div>'
+      + '<div class="combo-name" style="color:'+comboTxt+'">'+combo.name+'</div>'
+      + '<div class="combo-desc" style="color:'+comboTxt+'">'+combo.desc+'</div>'
+      + '<div class="combo-what" style="color:'+comboTxt+'">Things that might help:</div>'
       + '<ul class="combo-tips">'+tipsHtml+'</ul>'
       + '</div>';
   } else {
