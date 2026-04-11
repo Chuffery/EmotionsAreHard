@@ -25,7 +25,6 @@
     --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
     --accent: #5BA3E8;
   }
-  button.btn-primary:disabled { background: #2a2a3a; color: #5a5a7a; }
   button.btn-secondary { background: #252525; color: #cccccc; border: 1px solid rgba(255,255,255,0.25); }
   button.pill { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
   button.tag  { background: #1e1e1e; color: #aaaaaa; border-color: rgba(255,255,255,0.1); }
@@ -136,9 +135,13 @@ touch-action: manipulation;
 transition: opacity 0.12s;
 }
 button.btn:active { opacity: 0.75; }
-button.btn-primary { background: var(–accent); color: white; margin-top: 8px; }
-button.btn-primary:disabled { background: var(–bg3); color: var(–text3); cursor: not-allowed; }
+button.btn-primary { background: #4A90D9; color: #ffffff; margin-top: 8px; }
+button.btn-primary:disabled { background: #2a2a2a; color: #666666; cursor: not-allowed; }
 button.btn-secondary { background: var(–bg2); color: var(–text2); border: 1px solid var(–border2); }
+@media (prefers-color-scheme: dark) {
+button.btn-primary { background: #5BA3E8; color: #ffffff; }
+button.btn-primary:disabled { background: #2a2a3a; color: #5a5a7a; }
+}
 .btn-row { display: flex; gap: 10px; margin-top: 8px; }
 .btn-row button.btn-secondary { width: auto; padding: 14px 20px; flex-shrink: 0; }
 .btn-row button.btn-primary { flex: 1; margin-top: 0; }
