@@ -217,7 +217,7 @@ button.thought-chip.selected { border-width: 2px; }
 .combo-what { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .combo-tips { list-style: none; padding: 0; }
 .combo-tips li { font-size: 13px; line-height: 1.55; padding: 4px 0 4px 18px; position: relative; }
-.combo-tips li::before { content: "→"; position: absolute; left: 0; opacity: 0.5; }
+.combo-tips li::before { content: “→”; position: absolute; left: 0; opacity: 0.5; }
 
 /* INSTALL BANNER */
 .install-banner { background: #E0EEFB; border-radius: var(–radius-lg); padding: 14px 16px; margin-bottom: 18px; border: 1px solid rgba(74,144,217,0.2); }
@@ -243,13 +243,13 @@ button.install-close { float: right; background: none; border: none; font-size: 
       <p><strong>Add to Home Screen</strong> for the best experience.<br>Tap Share in Safari → "Add to Home Screen"</p>
     </div>
     <h1>How are you feeling?</h1>
-    <p class="sub">Start with the specific word that fits. Pick as many as feel true -- then we'll figure out the bigger picture together.</p>
+    <p class="sub">Start with the specific word that fits. Pick as many as feel true — then we'll figure out the bigger picture together.</p>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <input type="search" id="search-input" placeholder="Search feelings…" oninput="filterFeelings(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
     <div id="feelings-list"></div>
-    <button class="btn btn-primary" id="step1-next" disabled onclick="goStep(2)">Next -- see what this means →</button>
+    <button class="btn btn-primary" id="step1-next" disabled onclick="goStep(2)">Next — see what this means →</button>
   </div>
 
   <div id="step2" style="display:none">
@@ -267,14 +267,14 @@ button.install-close { float: right; background: none; border: none; font-size: 
   <div id="step3" style="display:none">
     <div class="steps" id="dots3"></div>
     <h1>How intense is this feeling?</h1>
-    <p class="sub">Rate the intensity right now -- 1 is barely noticeable, 10 is very overwhelming.</p>
+    <p class="sub">Rate the intensity right now — 1 is barely noticeable, 10 is very overwhelming.</p>
     <div class="intensity-row">
       <label>Intensity</label>
       <input type="range" min="1" max="10" value="5" step="1" id="intensity-slider" oninput="state.intensity=parseInt(this.value);document.getElementById('int-disp').textContent=this.value">
       <span class="intensity-val" id="int-disp">5</span>
     </div>
     <h1 style="margin-top:14px">What's your background mood?</h1>
-    <p class="sub">Mood is different from an emotion -- it's the general tone that's been lingering for hours or days, not just right now. Pick any that feel like your background state lately.</p>
+    <p class="sub">Mood is different from an emotion — it's the general tone that's been lingering for hours or days, not just right now. Pick any that feel like your background state lately.</p>
     <div class="mood-grid" id="mood-grid"></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
@@ -285,7 +285,7 @@ button.install-close { float: right; background: none; border: none; font-size: 
   <div id="step4" style="display:none">
     <div class="steps" id="dots4"></div>
     <h1>What kinds of thoughts are present?</h1>
-    <p class="sub">Thoughts are the stories we tell ourselves. Tap any patterns that feel familiar right now -- they don't have to be exact.</p>
+    <p class="sub">Thoughts are the stories we tell ourselves. Tap any patterns that feel familiar right now — they don't have to be exact.</p>
     <div class="thought-patterns" id="thought-chips"></div>
     <h1 style="margin-top:4px">Write it out</h1>
     <p class="sub">Anything else on your mind? Even fragments or half-sentences are fine.</p>
@@ -349,26 +349,26 @@ button.install-close { float: right; background: none; border: none; font-size: 
 <script>
 const WHEEL = [
   { core:"Happy", color:"#F0A500", light:"#FFF3D0", dark:"#7a5200",
-    desc:"Something good is happening inside you -- or recently happened. This family of feelings usually comes from things going well, getting what you need, or connecting with others.",
+    desc:"Something good is happening inside you — or recently happened. This family of feelings usually comes from things going well, getting what you need, or connecting with others.",
     feelings:["Joyful","Excited","Playful","Content","Peaceful","Grateful","Hopeful","Proud","Cheerful","Amused","Delighted","Optimistic","Enthusiastic","Inspired","Relieved","Satisfied","Fulfilled","Radiant"] },
   { core:"Sad", color:"#4A90D9", light:"#E0EEFB", dark:"#0C447C",
     desc:"Something feels heavy, missing, or not right. Sadness often comes from loss, disappointment, or feeling disconnected from something important to you.",
     feelings:["Lonely","Disappointed","Hurt","Grieving","Helpless","Regretful","Bored","Numb","Down","Miserable","Empty","Left out","Withdrawn","Heartbroken","Unwanted","Melancholy","Discouraged","Defeated"] },
   { core:"Angry", color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F",
-    desc:"Something feels unfair, blocked, or disrespected. Anger often protects something you care about -- a boundary, a value, or a need that isn't being met.",
+    desc:"Something feels unfair, blocked, or disrespected. Anger often protects something you care about — a boundary, a value, or a need that isn't being met.",
     feelings:["Frustrated","Irritated","Annoyed","Jealous","Betrayed","Resentful","Overwhelmed","Furious","Impatient","Bitter","Hostile","Agitated","Tense","Exasperated","Offended","Livid","Disgusted","Contemptuous"] },
   { core:"Scared", color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489",
-    desc:"Something feels uncertain, unsafe, or threatening. Fear and anxiety signal that your brain senses a possible danger -- real or imagined -- and is trying to protect you.",
+    desc:"Something feels uncertain, unsafe, or threatening. Fear and anxiety signal that your brain senses a possible danger — real or imagined — and is trying to protect you.",
     feelings:["Anxious","Nervous","Worried","Vulnerable","Insecure","Panicked","Confused","Uncertain","Apprehensive","Dread","Timid","Uneasy","Terrified","Startled","Shaky","Doubtful","On edge","Frozen"] },
   { core:"Disgusted", color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A",
     desc:"Something feels wrong, unacceptable, or violating. Disgust is a signal that something goes against your values or feels deeply uncomfortable to be around.",
     feelings:["Revolted","Uncomfortable","Avoidant","Put off","Appalled","Disrespected","Repulsed","Disapproving","Nauseated","Detached","Grossed out","Reluctant","Bothered","Unsettled","Judgmental","Aversion","Alienated","Closed off"] },
   { core:"Surprised", color:"#E05C8A", light:"#FDE8F1", dark:"#72243E",
-    desc:"Something unexpected happened -- good or bad. Surprise is a brief state that quickly shifts into another emotion once your brain has had time to process what occurred.",
+    desc:"Something unexpected happened — good or bad. Surprise is a brief state that quickly shifts into another emotion once your brain has had time to process what occurred.",
     feelings:["Shocked","Amazed","Speechless","Blindsided","Disbelieving","Awed","Curious","Astonished","Disoriented","Caught off guard","Stunned","Baffled","Wide-eyed","Perplexed","Taken aback","Fascinated","Thrown off","In disbelief"] },
 ];
 
-// MOOD GROUPS -- background states that linger for hours or days (from PDF definition)
+// MOOD GROUPS — background states that linger for hours or days (from PDF definition)
 const MOOD_GROUPS = [
   { label:"Anxious",     color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489" },
   { label:"Irritable",   color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F" },
@@ -388,7 +388,7 @@ const MOOD_GROUPS = [
   { label:"Tense",       color:"#C0392B", light:"#FDEDEC", dark:"#922B21" },
 ];
 
-// THOUGHT PATTERNS -- cognitive styles from PDF
+// THOUGHT PATTERNS — cognitive styles from PDF
 // Thought patterns grouped by tone so they render in sections
 const THOUGHT_PATTERNS = [
   // Challenging thoughts
@@ -433,7 +433,7 @@ const BODY_EMOTION_MAP = [
     hint:"Nausea, freezing and pins & needles can signal Disgust, Shock or overwhelm.",
     color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A" },
   { sensations:["Restless","Fast heartbeat","Shaky"],
-    hint:"Restlessness and a racing heart can also be Excitement -- not all activation is bad.",
+    hint:"Restlessness and a racing heart can also be Excitement — not all activation is bad.",
     color:"#F0A500", light:"#FFF3D0", dark:"#7a5200" },
 ];
 
@@ -480,7 +480,7 @@ function renderFeelings(query) {
   var q = (query || '').toLowerCase();
   var list = document.getElementById('feelings-list');
   // Only do a full DOM rebuild on first render or when search query changes.
-  // On toggle we ONLY update styles -- never rebuild -- so layout never reflows.
+  // On toggle we ONLY update styles — never rebuild — so layout never reflows.
   if (list._built && q === list._lastQuery) return;
   list._built = true;
   list._lastQuery = q;
@@ -547,7 +547,7 @@ function renderMoodGrid() {
       + '</button>';
   }).join('');
   document.getElementById('mood-grid').innerHTML = html;
-  // Mood is optional -- always enable next
+  // Mood is optional — always enable next
   document.getElementById('step3-next').disabled = false;
 }
 
@@ -725,7 +725,7 @@ function renderHistory() {
   }).join('');
 }
 
-// COMBINATION PATTERNS -- aligned with therapist PDF definitions
+// COMBINATION PATTERNS — aligned with therapist PDF definitions
 var COMBOS = [
   { cores:["Angry","Scared"], name:"Anxiety",
     color:"#9B59B6", light:"#F5EEF8", dark:"#6C3483",
@@ -734,43 +734,43 @@ var COMBOS = [
 
   { cores:["Sad","Angry"], name:"Frustration",
     color:"#E05C8A", light:"#FDE8F1", dark:"#72243E",
-    desc:"Frustration happens when sadness and anger arrive together -- when you're both disappointed by something and angry that it happened or couldn't be changed. It often follows unmet expectations or blocked goals.",
-    tips:["Acknowledge both the disappointment AND the anger -- neither cancels the other","Ask: what did I expect that didn't happen?","Small actions toward the blocked goal can help, even symbolic ones"] },
+    desc:"Frustration happens when sadness and anger arrive together — when you're both disappointed by something and angry that it happened or couldn't be changed. It often follows unmet expectations or blocked goals.",
+    tips:["Acknowledge both the disappointment AND the anger — neither cancels the other","Ask: what did I expect that didn't happen?","Small actions toward the blocked goal can help, even symbolic ones"] },
 
   { cores:["Happy","Scared"], name:"Excitement",
     color:"#F0A500", light:"#FFF3D0", dark:"#7a5200",
     desc:"When something positive is happening but there's also nervousness about what comes next, joy and fear combine into excitement. The joy comes from anticipation; the fear adds nervous energy about the unknown.",
-    tips:["The anxiety doesn't mean the good thing is wrong -- it means it matters to you","Name what specifically feels uncertain","Let yourself enjoy the positive part even while the nervous part is also present"] },
+    tips:["The anxiety doesn't mean the good thing is wrong — it means it matters to you","Name what specifically feels uncertain","Let yourself enjoy the positive part even while the nervous part is also present"] },
 
   { cores:["Sad","Disgusted"], name:"Repulsion or Shame",
     color:"#3DAA6E", light:"#E0F4EA", dark:"#27500A",
-    desc:"When sadness combines with disgust -- whether toward a situation or toward yourself -- it creates either repulsion (directed outward) or shame (directed inward). Shame in particular is a deep reaction that combines sorrow with a sense of wrongness.",
-    tips:["Try to notice whether the disgust is aimed at a situation or at yourself","Shame thrives in silence -- talking to a trusted person can reduce its intensity","Ask yourself: would I speak this way to someone I cared about?"] },
+    desc:"When sadness combines with disgust — whether toward a situation or toward yourself — it creates either repulsion (directed outward) or shame (directed inward). Shame in particular is a deep reaction that combines sorrow with a sense of wrongness.",
+    tips:["Try to notice whether the disgust is aimed at a situation or at yourself","Shame thrives in silence — talking to a trusted person can reduce its intensity","Ask yourself: would I speak this way to someone I cared about?"] },
 
   { cores:["Angry","Disgusted"], name:"Contempt",
     color:"#E24B4A", light:"#FDEAEA", dark:"#791F1F",
-    desc:"When disgust and anger combine, the result is contempt -- a feeling of disdain and judgment toward someone or something. It often arises when another person's behavior conflicts sharply with your values.",
+    desc:"When disgust and anger combine, the result is contempt — a feeling of disdain and judgment toward someone or something. It often arises when another person's behavior conflicts sharply with your values.",
     tips:["Notice if contempt is protecting a value that matters to you","Distance from the source can help you process without escalating","Try to separate the behavior you find wrong from the person as a whole"] },
 
   { cores:["Surprised","Scared"], name:"Shock",
     color:"#1A8FC1", light:"#D6EEF8", dark:"#0E5A7A",
-    desc:"When something unexpected also feels threatening or destabilising, surprise and fear combine into shock. Your brain needs time to catch up with what just happened -- this is a normal protective response, not weakness.",
-    tips:["Give yourself time before responding or deciding anything","Grounding helps: feel your feet, name 5 things you can see","It's completely okay to say 'I need a moment' -- you don't have to process it instantly"] },
+    desc:"When something unexpected also feels threatening or destabilising, surprise and fear combine into shock. Your brain needs time to catch up with what just happened — this is a normal protective response, not weakness.",
+    tips:["Give yourself time before responding or deciding anything","Grounding helps: feel your feet, name 5 things you can see","It's completely okay to say 'I need a moment' — you don't have to process it instantly"] },
 
   { cores:["Happy","Sad"], name:"Bittersweetness or Melancholy",
     color:"#8E44AD", light:"#F4ECF7", dark:"#5B2C6F",
-    desc:"Joy and sadness at the same time is one of the most human feelings there is -- the PDF calls this melancholy. It often comes with endings, milestones, nostalgia, or moments that are beautiful precisely because they won't last.",
+    desc:"Joy and sadness at the same time is one of the most human feelings there is — the PDF calls this melancholy. It often comes with endings, milestones, nostalgia, or moments that are beautiful precisely because they won't last.",
     tips:["Let yourself feel both without trying to choose one","This combination often means something truly mattered to you","Acknowledge what is ending or changing, rather than pushing past it"] },
 
   { cores:["Scared","Angry","Sad"], name:"Overwhelm or Burnout",
     color:"#7B68EE", light:"#EDEAFD", dark:"#3C3489",
-    desc:"Three or more emotion families at once is a strong signal that your system is overloaded. This is what burnout, emotional overwhelm, or sensory exhaustion can feel like -- too much, from too many directions, all at the same time.",
-    tips:["This is a signal to reduce input and demands, not push harder","Rest is not optional here -- your nervous system genuinely needs a reset","Try to identify the single biggest drain and see if it can be reduced even slightly"] },
+    desc:"Three or more emotion families at once is a strong signal that your system is overloaded. This is what burnout, emotional overwhelm, or sensory exhaustion can feel like — too much, from too many directions, all at the same time.",
+    tips:["This is a signal to reduce input and demands, not push harder","Rest is not optional here — your nervous system genuinely needs a reset","Try to identify the single biggest drain and see if it can be reduced even slightly"] },
 
   { cores:["Angry","Sad","Disgusted"], name:"Betrayal",
     color:"#C0392B", light:"#FDEDEC", dark:"#922B21",
-    desc:"This combination -- anger, hurt, and a sense of wrongness -- is one of the clearest emotional signatures of betrayal. Something or someone you trusted did not come through. All three responses make complete sense together.",
-    tips:["Give yourself time before making big decisions in this state","All three feelings are valid responses to the same event -- they don't contradict each other","Trust takes time to rebuild, and you get to set that timeline"] },
+    desc:"This combination — anger, hurt, and a sense of wrongness — is one of the clearest emotional signatures of betrayal. Something or someone you trusted did not come through. All three responses make complete sense together.",
+    tips:["Give yourself time before making big decisions in this state","All three feelings are valid responses to the same event — they don't contradict each other","Trust takes time to rebuild, and you get to set that timeline"] },
 ];
 
 function findCombo(grouped) {
